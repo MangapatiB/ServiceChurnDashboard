@@ -1,0 +1,323 @@
+2026-05-18 10:54:33 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 10:54:33 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 10:54:33 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:55:01 | ERROR | app.services.databricks_client | Databricks query execution failed.
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 446, in _make_request
+    six.raise_from(e, None)
+  File "<string>", line 3, in raise_from
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 441, in _make_request
+    httplib_response = conn.getresponse()
+  File "/usr/lib/python3.10/http/client.py", line 1395, in getresponse
+    response.begin()
+  File "/usr/lib/python3.10/http/client.py", line 323, in begin
+    version, status, reason = self._read_status()
+  File "/usr/lib/python3.10/http/client.py", line 284, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+  File "/usr/lib/python3.10/socket.py", line 705, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.10/ssl.py", line 1303, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.10/ssl.py", line 1159, in read
+    return self._sslobj.read(len, buffer)
+TimeoutError: The read operation timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/requests/adapters.py", line 439, in send
+    resp = conn.urlopen(
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 756, in urlopen
+    retries = retries.increment(
+  File "/usr/lib/python3/dist-packages/urllib3/util/retry.py", line 534, in increment
+    raise six.reraise(type(error), error, _stacktrace)
+  File "/usr/lib/python3/dist-packages/six.py", line 719, in reraise
+    raise value
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 700, in urlopen
+    httplib_response = self._make_request(
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 448, in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 337, in _raise_timeout
+    raise ReadTimeoutError(
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='adb-2499533172944623.3.azuredatabricks.net', port=443): Read timed out. (read timeout=30)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/root/MyProjects/Dashboard/app/services/databricks_client.py", line 32, in run_query
+    response = requests.post(
+  File "/usr/lib/python3/dist-packages/requests/api.py", line 119, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "/usr/lib/python3/dist-packages/requests/api.py", line 61, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/usr/lib/python3/dist-packages/requests/sessions.py", line 544, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/usr/lib/python3/dist-packages/requests/sessions.py", line 657, in send
+    r = adapter.send(request, **kwargs)
+  File "/usr/lib/python3/dist-packages/requests/adapters.py", line 529, in send
+    raise ReadTimeout(e, request=request)
+requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='adb-2499533172944623.3.azuredatabricks.net', port=443): Read timed out. (read timeout=30)
+2026-05-18 10:55:01 | ERROR | app.services.data_service | Failed to build live dashboard snapshot. Falling back to mock data. location=ALL LOCATIONS limit=12 segment=res
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 446, in _make_request
+    six.raise_from(e, None)
+  File "<string>", line 3, in raise_from
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 441, in _make_request
+    httplib_response = conn.getresponse()
+  File "/usr/lib/python3.10/http/client.py", line 1395, in getresponse
+    response.begin()
+  File "/usr/lib/python3.10/http/client.py", line 323, in begin
+    version, status, reason = self._read_status()
+  File "/usr/lib/python3.10/http/client.py", line 284, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+  File "/usr/lib/python3.10/socket.py", line 705, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.10/ssl.py", line 1303, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.10/ssl.py", line 1159, in read
+    return self._sslobj.read(len, buffer)
+TimeoutError: The read operation timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/requests/adapters.py", line 439, in send
+    resp = conn.urlopen(
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 756, in urlopen
+    retries = retries.increment(
+  File "/usr/lib/python3/dist-packages/urllib3/util/retry.py", line 534, in increment
+    raise six.reraise(type(error), error, _stacktrace)
+  File "/usr/lib/python3/dist-packages/six.py", line 719, in reraise
+    raise value
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 700, in urlopen
+    httplib_response = self._make_request(
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 448, in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 337, in _raise_timeout
+    raise ReadTimeoutError(
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='adb-2499533172944623.3.azuredatabricks.net', port=443): Read timed out. (read timeout=30)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/root/MyProjects/Dashboard/app/services/data_service.py", line 59, in get_dashboard_snapshot
+    truckroll_rows = self.client.run_query(build_truckroll_query(safe_location, safe_limit))
+  File "/root/MyProjects/Dashboard/app/services/databricks_client.py", line 32, in run_query
+    response = requests.post(
+  File "/usr/lib/python3/dist-packages/requests/api.py", line 119, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "/usr/lib/python3/dist-packages/requests/api.py", line 61, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/usr/lib/python3/dist-packages/requests/sessions.py", line 544, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/usr/lib/python3/dist-packages/requests/sessions.py", line 657, in send
+    r = adapter.send(request, **kwargs)
+  File "/usr/lib/python3/dist-packages/requests/adapters.py", line 529, in send
+    raise ReadTimeout(e, request=request)
+requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='adb-2499533172944623.3.azuredatabricks.net', port=443): Read timed out. (read timeout=30)
+2026-05-18 10:55:01 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=30715.38
+2026-05-18 10:55:01 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 10:55:01] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 10:55:36 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 10:55:36 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 10:55:36 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:55:39 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152c9-a078-11c1-b99c-02dd0153deb8 row_count=12
+2026-05-18 10:55:39 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:55:42 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152c9-a221-1d8e-9e6a-0bfc59ccfaad row_count=10
+2026-05-18 10:55:42 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:55:50 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152c9-a3e2-186f-ab8f-cbd4c32e11ca row_count=0
+2026-05-18 10:55:50 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:56:04 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152c9-a86f-1193-a35b-e4b30bdf0b2a row_count=217088
+2026-05-18 10:56:04 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=214251
+2026-05-18 10:56:10 | INFO | app.services.sql_server_client | Fetched modem health rows from SQL Server. row_count=4
+2026-05-18 10:56:11 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=37091.71
+2026-05-18 10:56:11 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 10:56:11] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 10:56:36 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 10:56:36 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 10:56:36 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:56:38 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152c9-c420-19c8-8d15-92b86a84fa66 row_count=12
+2026-05-18 10:56:38 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:56:40 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152c9-c561-1f8e-aa0a-7324edec8d71 row_count=10
+2026-05-18 10:56:40 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:56:41 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152c9-c661-1519-992c-c5c63cd13fcd row_count=0
+2026-05-18 10:56:41 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=5538.61
+2026-05-18 10:56:41 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 10:56:41] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 10:57:35 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 10:57:35 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 10:57:35 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:57:43 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152c9-e7e5-1963-9328-b541da9f5b24 row_count=12
+2026-05-18 10:57:43 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:57:46 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152c9-ecc3-1a1c-880a-c1626946293d row_count=10
+2026-05-18 10:57:46 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:57:47 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152c9-edb3-1e3a-a4b5-c0b7223ef315 row_count=0
+2026-05-18 10:57:47 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=11719.84
+2026-05-18 10:57:47 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 10:57:47] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 10:58:35 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 10:58:35 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 10:58:35 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:58:38 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-0ba3-1943-a25a-81c9901269d2 row_count=12
+2026-05-18 10:58:38 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:58:39 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-0ce2-1c16-89b0-843e3d710db5 row_count=10
+2026-05-18 10:58:39 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:58:41 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-0de2-14c8-84ac-fa624e38c6c5 row_count=0
+2026-05-18 10:58:41 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=5669.36
+2026-05-18 10:58:41 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 10:58:41] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 10:59:35 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 10:59:35 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 10:59:35 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:59:38 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-2f6f-1c82-8b21-e57225835ad1 row_count=12
+2026-05-18 10:59:38 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:59:39 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-30b2-1248-b66e-2a8a9e69b1f8 row_count=10
+2026-05-18 10:59:39 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 10:59:41 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-3182-19aa-b151-42ec29c8c33c row_count=0
+2026-05-18 10:59:41 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=5271.89
+2026-05-18 10:59:41 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 10:59:41] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:00:36 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:00:36 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:00:36 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:00:39 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-53c5-19fa-8382-bcc96f1ec4cc row_count=12
+2026-05-18 11:00:39 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:00:40 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-550f-1770-920d-91b58ab0ae74 row_count=10
+2026-05-18 11:00:40 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:00:42 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-55f3-12b5-9b15-858a52ec596d row_count=0
+2026-05-18 11:00:42 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=5623.60
+2026-05-18 11:00:42 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:00:42] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:01:37 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:01:37 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:01:37 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:01:40 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-781d-1655-bb15-ec8f48ac4174 row_count=12
+2026-05-18 11:01:40 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:01:41 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-795a-1986-8c23-de8dbc0b47c2 row_count=10
+2026-05-18 11:01:41 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:01:43 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-7a30-1541-ae4a-d31da631b33d row_count=0
+2026-05-18 11:01:43 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=5131.65
+2026-05-18 11:01:43 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:01:43] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:02:38 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:02:38 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:02:38 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:02:41 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-9c83-17d7-805b-2fa79e85ae2a row_count=12
+2026-05-18 11:02:41 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:02:43 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-9ddd-1dde-a73d-a134d3d17a5d row_count=10
+2026-05-18 11:02:43 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:02:45 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-9ee3-118e-861e-9a8a4e68ce97 row_count=0
+2026-05-18 11:02:45 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=6509.02
+2026-05-18 11:02:45 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:02:45] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:03:39 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:03:39 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:03:39 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:03:42 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-c0d7-19ae-99d0-1e5ea31e70c7 row_count=12
+2026-05-18 11:03:42 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:03:43 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-c205-118c-9d3a-57d90038d7e9 row_count=10
+2026-05-18 11:03:43 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:03:45 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-c306-1d1a-a822-3ad267aa1ca8 row_count=0
+2026-05-18 11:03:45 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=5266.19
+2026-05-18 11:03:45 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:03:45] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:04:40 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:04:40 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:04:40 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:04:42 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-e537-124a-8d61-fdef1eb8e8b9 row_count=12
+2026-05-18 11:04:42 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:04:44 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-e666-1f43-a5d4-2bca1f5718bf row_count=10
+2026-05-18 11:04:44 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:04:45 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152ca-e760-175c-b36e-64bd97d0ef43 row_count=0
+2026-05-18 11:04:45 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=5228.13
+2026-05-18 11:04:45 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:04:45] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:05:41 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:05:41 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:05:41 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:05:43 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-098c-1c8f-9304-a8bb5fe98542 row_count=12
+2026-05-18 11:05:43 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:05:45 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-0acb-1921-aa7f-c2f0311b177b row_count=10
+2026-05-18 11:05:45 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:05:46 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-0bbb-1ffb-8bcf-a99385794608 row_count=0
+2026-05-18 11:05:46 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=5205.90
+2026-05-18 11:05:46 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:05:46] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:06:42 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:06:42 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:06:42 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:06:44 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-2deb-19fe-8282-4f594698aa4e row_count=12
+2026-05-18 11:06:44 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:06:47 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-2fa1-122d-9e63-bd9f6e24ff5b row_count=10
+2026-05-18 11:06:47 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:06:50 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-31e5-179b-b935-01bf21cd5ad0 row_count=0
+2026-05-18 11:06:50 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=8307.71
+2026-05-18 11:06:50 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:06:50] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:07:43 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:07:43 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:07:43 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:07:45 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-5249-15ef-a99f-3a34bbd60206 row_count=12
+2026-05-18 11:07:45 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:07:46 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-536b-103b-ac66-59f3de86dc10 row_count=10
+2026-05-18 11:07:46 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:07:48 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-5488-1a38-be58-60aab62c3c42 row_count=0
+2026-05-18 11:07:48 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=4800.31
+2026-05-18 11:07:48 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:07:48] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:08:44 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:08:44 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:08:44 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:08:46 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-76a9-11fa-91cd-4a6d9eb2fc91 row_count=12
+2026-05-18 11:08:46 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:08:48 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-77fa-11b4-a8ae-8eca68e5b036 row_count=10
+2026-05-18 11:08:48 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:08:49 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-78ef-18ca-8a31-08f7e301f530 row_count=0
+2026-05-18 11:08:49 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=5321.15
+2026-05-18 11:08:49 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:08:49] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:09:45 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:09:45 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:09:45 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:09:47 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-9b03-19b9-8b4f-04dc2a4e4e6c row_count=12
+2026-05-18 11:09:47 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:09:48 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-9c3d-176c-8e63-f9ca1a9e210e row_count=10
+2026-05-18 11:09:48 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:09:50 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-9d27-1840-a9b6-d3b4a4ce1f97 row_count=0
+2026-05-18 11:09:50 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=4884.95
+2026-05-18 11:09:50 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:09:50] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:10:46 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:10:46 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:10:46 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:10:48 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-bf58-1390-ba51-0a87ed746051 row_count=12
+2026-05-18 11:10:48 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:10:50 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-c0bf-1fda-8739-cfc771344f25 row_count=10
+2026-05-18 11:10:50 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:10:51 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-c191-1ab6-bdf3-00470e610d6b row_count=0
+2026-05-18 11:10:51 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=5299.65
+2026-05-18 11:10:51 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:10:51] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:11:47 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:11:47 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:11:47 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:11:50 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-e3b5-18f2-aabb-ad85abe733d2 row_count=12
+2026-05-18 11:11:50 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:11:51 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-e53a-1134-8edf-94cfe018636d row_count=10
+2026-05-18 11:11:51 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:11:52 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cb-e61f-1f59-b2a2-5ef418cc6eeb row_count=0
+2026-05-18 11:11:52 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=5339.37
+2026-05-18 11:11:52 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:11:52] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:12:48 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:12:48 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:12:48 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:12:50 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cc-0818-1aed-8e14-e11a6ed8e105 row_count=12
+2026-05-18 11:12:50 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:12:52 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cc-097b-1aa4-a043-8d2eff1d831c row_count=10
+2026-05-18 11:12:52 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:12:53 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cc-0a74-1fe0-8d39-0bd25b72ea0a row_count=0
+2026-05-18 11:12:53 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=5456.90
+2026-05-18 11:12:53 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:12:53] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:13:49 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:13:49 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:13:49 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:13:51 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cc-2c70-148c-9fee-2d92c3ed053f row_count=12
+2026-05-18 11:13:51 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:13:53 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cc-2db9-15ac-aec4-d8dce279cd3d row_count=10
+2026-05-18 11:13:53 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:13:54 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cc-2e9a-1dfd-b42c-a3b4d8402df7 row_count=0
+2026-05-18 11:13:54 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=4852.66
+2026-05-18 11:13:54 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:13:54] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-05-18 11:14:50 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-05-18 11:14:50 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-05-18 11:14:50 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:14:52 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cc-50cf-1486-b6c9-8b1e511f8d36 row_count=12
+2026-05-18 11:14:52 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:14:54 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cc-525f-157b-852e-9af07fe5ef33 row_count=10
+2026-05-18 11:14:54 | INFO | app.services.databricks_client | Submitting Databricks SQL statement. warehouse_id=926835bd268bdeb0
+2026-05-18 11:14:56 | INFO | app.services.databricks_client | Databricks SQL statement succeeded. statement_id=01f152cc-5360-1633-87a9-fdaaf711e929 row_count=0
+2026-05-18 11:14:56 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=5981.23
+2026-05-18 11:14:56 | INFO | werkzeug | 127.0.0.1 - - [18/May/2026 11:14:56] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -

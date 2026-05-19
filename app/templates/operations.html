@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Market Watchlist Summary{% endblock %}
+
+{% block body %}
+<div class="page-shell">
+    <div class="topbar">
+        <div class="brand-lockup" aria-label="Sparklight service churn dashboard">
+            <img
+                class="brand-lockup__banner"
+                src="{{ url_for('static', filename='img/sparklight-banner.webp') }}"
+                alt="Sparklight banner"
+            >
+            <div class="brand-lockup__copy">
+                <p class="brand-lockup__title">Service Churn Dashboard</p>
+            </div>
+        </div>
+        <div class="topbar__meta">
+            <a class="topbar__pill topbar__link" href="{{ url_for('dashboard.dashboard_home', location=current_location, limit=current_limit, segment=current_segment) }}">Main dashboard</a>
+            <span class="topbar__pill">{{ data_mode|upper }} mode</span>
+            <span class="topbar__pill">{{ refresh_seconds }}s refresh</span>
+            <details class="about-menu">
+                <summary class="topbar__pill about-menu__toggle">About</summary>
+                <div class="about-menu__panel">
+                    <p>Use this page to isolate market-level watchlist decisions without the rest of the dashboard in view.</p>
+                    <p>Apply the same billing city and limit filters to focus the exact operating slice you need.</p>
+                    <p>Review flagged markets, risk tiers, and recommended actions before routing field or care follow-up.</p>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <main class="dashboard-grid">
+        <section class="panel panel--full panel--overview">
+            <div class="panel__header">
+                <div>
+                    <p class="section-kicker">Operations view</p>
+                    <h2>Market watchlist summary</h2>
+                    <p class="panel__description">Review geo concentration separately from the main dashboard so operations can focus on flagged markets, tier pressure, and next actions without the rest of the customer workflow in the way.</p>
+                </div>
+            </div>
+            <form class="dashboard-filters" method="get" action="{{ url_for('dashboard.operations_view') }}">
+                <label class="filter-field">
+                    <span>Customer type</span>
+                    <select name="segment">
+                        <option value="res" {% if current_segment == 'res' %}selected{% endif %}>Residential</option>
+                        <option value="com" {% if current_segment == 'com' %}selected{% endif %}>Business</option>
+                    </select>
+                </label>
+                <label class="filter-field">
+                    <span>Billing city</span>
+                    <select name="location">
+                        <option value="" {% if not current_location %}selected{% endif %}>All locations</option>
+                        {% for location in location_options %}
+                        <option value="{{ location }}" {% if current_location|upper == location %}selected{% endif %}>{{ location }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="filter-field">
+                    <span>Limit</span>
+                    <input name="limit" type="number" min="1" max="100000" value="{{ current_limit }}">
+                </label>
+                <button class="refresh-button" type="submit">Apply filters</button>
+            </form>
+        </section>
+
+        <section class="panel panel--full">
+            <div class="panel__header">
+                <div>
+                    <p class="section-kicker">Operations view</p>
+                    <h2>Market watchlist summary</h2>
+                    <p class="panel__description">Review geo concentration first to spot where churn pressure is clustering and which team should intervene next.</p>
+                </div>
+                <label class="table-toolbar__label" for="geo-tier-sort-select">
+                    <span>Tier</span>
+                    <select class="table-toolbar__select" id="geo-tier-sort-select" aria-label="Sort markets by tier">
+                        <option value="asc">Asc</option>
+                        <option value="desc">Desc</option>
+                    </select>
+                </label>
+            </div>
+            <div class="table-wrap">
+                <table class="dashboard-table dashboard-table--geo">
+                    <thead>
+                        <tr>
+                            <th>Geo</th>
+                            <th>Flagged accounts</th>
+                            <th>Avg risk</th>
+                            <th>90+ risk</th>
+                            <th>Contactable</th>
+                            <th>Top driver</th>
+                            <th>Tier</th>
+                            <th>Recommended action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="geo-operations-table-body">
+                        {% if initial_snapshot.geo_summary %}
+                            {% for item in initial_snapshot.geo_summary %}
+                            <tr>
+                                <td>{{ item.geo }}</td>
+                                <td>{{ item.flagged_accounts }}</td>
+                                <td>{{ item.avg_risk }}</td>
+                                <td>{{ item.high_risk_count }}</td>
+                                <td>{{ item.contactable_count }}</td>
+                                <td>{{ item.top_driver }}</td>
+                                <td><span class="badge {% if item.risk_tier == 'Tier 1' %}badge--risk{% elif item.risk_tier == 'Tier 2' %}badge--warning{% else %}badge--neutral{% endif %}">{{ item.risk_tier }}</span></td>
+                                <td>{{ item.recommended_action }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8">
+                                    <div class="empty-state empty-state--table">No market watchlist rows match the current filter.</div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+    (function () {
+        const sortSelect = document.getElementById("geo-tier-sort-select");
+        const tableBody = document.getElementById("geo-operations-table-body");
+
+        function tierWeight(value) {
+            if (value === "Tier 1") return 1;
+            if (value === "Tier 2") return 2;
+            if (value === "Tier 3") return 3;
+            return 99;
+        }
+
+        function sortRows(direction) {
+            if (!tableBody) {
+                return;
+            }
+            const rows = [...tableBody.querySelectorAll("tr")].filter((row) => row.children.length === 8);
+            rows.sort((left, right) => {
+                const leftTier = left.children[6]?.textContent.trim() || "";
+                const rightTier = right.children[6]?.textContent.trim() || "";
+                const difference = tierWeight(leftTier) - tierWeight(rightTier);
+                return direction === "desc" ? -difference : difference;
+            });
+            rows.forEach((row) => tableBody.appendChild(row));
+        }
+
+        sortSelect?.addEventListener("change", (event) => {
+            sortRows(event.target.value);
+        });
+
+        sortRows(sortSelect?.value || "asc");
+    }());
+</script>
+{% endblock %}

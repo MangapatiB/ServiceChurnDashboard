@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Churn Service Dashboard{% endblock %}
+
+{% block body %}
+<div class="page-shell">
+    <div class="topbar">
+        <div class="brand-lockup" aria-label="Sparklight service churn dashboard">
+            <img
+                class="brand-lockup__banner"
+                src="{{ url_for('static', filename='img/sparklight-banner.webp') }}"
+                alt="Sparklight banner"
+            >
+            <div class="brand-lockup__copy">
+                <p class="brand-lockup__title">Service Churn Dashboard</p>
+            </div>
+        </div>
+        <div class="topbar__meta">
+            <a class="topbar__pill topbar__link" href="{{ url_for('dashboard.operations_view', location=current_location, limit=current_limit, segment=current_segment) }}">Operations view</a>
+            <span class="topbar__pill">{{ data_mode|upper }} mode</span>
+            <label class="topbar__pill topbar__refresh" for="refresh-interval-select">
+                <select class="topbar__select" id="refresh-interval-select" aria-label="Auto refresh interval">
+                    <option value="0">Disabled</option>
+                    <option value="{{ refresh_seconds }}" selected>{{ refresh_seconds }}s refresh</option>
+                </select>
+            </label>
+            <details class="about-menu">
+                <summary class="topbar__pill about-menu__toggle">About</summary>
+                <div class="about-menu__panel">
+                    <p>Start with the KPI band to see overall pressure and movement.</p>
+                    <p>Use signal mix and tier playbooks to understand why markets are trending.</p>
+                    <p>Move into watchlists to assign geo and customer-level actions.</p>
+                    <p>In live mode the dashboard queries Databricks directly. If those queries fail, the page can fall back to seeded data until access is restored.</p>
+                    <p><strong>How teams should respond:</strong> Each tier maps the observed risk posture to an expected operating response, keeping care and field actions aligned.</p>
+                    <p><strong>Tier 1:</strong> Immediate contact queue. 0 accounts are at 90+ churn risk and should move to same-day outbound call and SMS outreach.</p>
+                    <p><strong>Tier 2:</strong> Retention worklist. Customers with elevated churn drivers but lower urgency should be queued for proactive contact and service follow-up.</p>
+                    <p><strong>Tier 3:</strong> Market monitoring. Track signal concentration across 12 flagged accounts to decide where operations and marketing should intervene next.</p>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <section class="summary-strip" id="summary-strip"></section>
+
+    <main class="dashboard-grid">
+        <section class="panel panel--full panel--overview">
+            <div class="panel__header">
+                <div>
+                    <p class="section-kicker">Overview</p>
+                    <h2>Risk and friction signals</h2>
+                    <p class="panel__description">Use the filters to focus the live snapshot, then compare high-risk volume against the operating signals behind it.</p>
+                </div>
+            </div>
+            <form class="dashboard-filters" id="dashboard-filters">
+                <label class="filter-field">
+                    <span>Customer type</span>
+                    <select id="segment-input" name="segment">
+                        <option value="res" {% if current_segment == 'res' %}selected{% endif %}>Residential</option>
+                        <option value="com" {% if current_segment == 'com' %}selected{% endif %}>Business</option>
+                    </select>
+                </label>
+                <label class="filter-field">
+                    <span>Billing city</span>
+                    <select id="location-input" name="location">
+                        <option value="" {% if not current_location %}selected{% endif %}>All locations</option>
+                        {% for location in location_options %}
+                        <option value="{{ location }}" {% if current_location|upper == location %}selected{% endif %}>{{ location }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="filter-field">
+                    <span>Limit</span>
+                    <input id="limit-input" name="limit" type="number" min="1" max="100000" value="{{ current_limit }}">
+                </label>
+                <button class="refresh-button" id="refresh-button" type="submit">Apply filters</button>
+            </form>
+            <div class="kpi-grid" id="kpi-grid"></div>
+        </section>
+
+        <section class="panel panel--full">
+            <div class="panel__header">
+                <div>
+                    <p class="section-kicker">Customer drill-down</p>
+                    <h2>Highest risk accounts</h2>
+                    <p class="panel__description">These customers are the fastest path from signal review to immediate action, so the table keeps contactability and next-step guidance in one place.</p>
+                </div>
+                <div class="table-pagination" id="customer-pagination">
+                    <div class="table-pagination__actions table-pagination__actions--stacked">
+                        <label class="table-toolbar__label" for="customer-sort-select">
+                            <span>Churn probability</span>
+                            <select class="table-toolbar__select" id="customer-sort-select" aria-label="Sort customers by churn probability">
+                                <option value="desc">Desc</option>
+                                <option value="asc">Asc</option>
+                            </select>
+                        </label>
+                        <p class="table-pagination__summary" id="customer-pagination-summary">Showing 0-0 of 0 accounts</p>
+                        <div class="table-pagination__button-row">
+                            <button class="pagination-button" id="customer-prev-button" type="button">Previous 15</button>
+                            <button class="pagination-button" id="customer-next-button" type="button">Next 15</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table class="dashboard-table dashboard-table--customers">
+                    <colgroup>
+                        <col class="customer-col customer-col--id">
+                        <col class="customer-col customer-col--geo">
+                        <col class="customer-col customer-col--phone">
+                        <col class="customer-col customer-col--risk">
+                        <col class="customer-col customer-col--drivers">
+                        <col class="customer-col customer-col--event">
+                        <col class="customer-col customer-col--action">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th class="customer-head customer-head--id">Customer ID</th>
+                            <th class="customer-head customer-head--geo">Geo</th>
+                            <th class="customer-head customer-head--phone">Phone</th>
+                            <th class="customer-head customer-head--risk">Churn probability</th>
+                            <th class="customer-head customer-head--drivers">Drivers</th>
+                            <th class="customer-head customer-head--event">Last event</th>
+                            <th class="customer-head customer-head--action">Next action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customer-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel panel--chart panel--stacked-metrics">
+            <div class="panel__header">
+                <div>
+                    <p class="section-kicker">Signal mix</p>
+                    <h2>What is driving churn risk</h2>
+                    <p class="panel__description">Signals are shown as a share of current friction volume so teams can quickly separate infrastructure issues from customer-contact trends.</p>
+                </div>
+            </div>
+            <div class="signal-list" id="signal-list"></div>
+        </section>
+
+        <section class="panel panel--calls panel--stacked-metrics">
+            <div class="panel__header">
+                <div>
+                    <p class="section-kicker">Call data</p>
+                    <h2>Call data</h2>
+                    <p class="panel__description">Track 6 to 12 month authenticated call volume for the displayed watchlist accounts so repeat contact pressure is visible beside churn drivers.</p>
+                    <p class="panel__description panel__description--compact" id="call-scope-label"></p>
+                </div>
+            </div>
+            <div class="panel__body panel__body--stacked">
+                <div class="mini-kpi-grid" id="call-kpi-grid"></div>
+                <div class="insight-list" id="call-breakdown-list"></div>
+            </div>
+        </section>
+
+        <section class="panel panel--health panel--full">
+            <div class="panel__header">
+                <div>
+                    <p class="section-kicker">Modem health</p>
+                    <h2>Latest modem telemetry</h2>
+                    <p class="panel__description">Join Databricks account-to-MAC mappings with SQL Server modem rows so the watchlist shows the latest reachable modem sample for each account.</p>
+                </div>
+            </div>
+            <div class="mini-kpi-grid" id="plant-kpi-grid"></div>
+            <div class="table-wrap">
+                <table class="dashboard-table dashboard-table--plant">
+                    <thead>
+                        <tr>
+                            <th>Geo</th>
+                            <th>Customer ID</th>
+                            <th>Modem MAC</th>
+                            <th>Status</th>
+                            <th>IP</th>
+                            <th>Last seen</th>
+                            <th>USINT</th>
+                            <th>US RXLVL</th>
+                            <th>US TXPWR</th>
+                            <th>US RXSNR</th>
+                            <th>DS RXLVL</th>
+                            <th>DS RXSNR</th>
+                            <th>DS PREFEC</th>
+                            <th>DS POSTFEC</th>
+                            <th>DS BW</th>
+                            <th>US BW</th>
+                            <th>Fiber node / CMTS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="plant-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+</div>
+{% endblock %}

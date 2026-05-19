@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#353091">
+    <title>{% block title %}Churn Service Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    {% block body %}{% endblock %}
+    {% block page_scripts %}
+    <script>
+        window.__DASHBOARD_BOOTSTRAP__ = {
+            initialSnapshot: {{ initial_snapshot|tojson }},
+            refreshSeconds: {{ refresh_seconds|tojson }},
+            dataMode: {{ data_mode|tojson }},
+            currentLocation: {{ current_location|tojson }},
+            currentLimit: {{ current_limit|tojson }},
+            currentSegment: {{ current_segment|tojson }}
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
+    {% endblock %}
+</body>
+</html>

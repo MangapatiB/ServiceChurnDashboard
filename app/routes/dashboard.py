@@ -1,0 +1,64 @@
+from flask import Blueprint, current_app, jsonify, render_template, request
+
+from app.services.data_service import DashboardDataService
+from app.services.query_builders import normalize_customer_segment, normalize_limit
+
+
+dashboard_bp = Blueprint("dashboard", __name__)
+
+
+def _get_dashboard_service() -> DashboardDataService:
+    service = current_app.extensions.get("dashboard_data_service")
+    if service is None:
+        service = DashboardDataService(current_app.config)
+        current_app.extensions["dashboard_data_service"] = service
+    return service
+
+
+@dashboard_bp.get("/")
+def dashboard_home():
+    service = _get_dashboard_service()
+    location = request.args.get("location", "")
+    limit = normalize_limit(request.args.get("limit"), default=current_app.config["HIGH_RISK_LIMIT"])
+    customer_segment = normalize_customer_segment(request.args.get("segment"))
+    snapshot = service.get_dashboard_snapshot(location=location, limit=limit, customer_segment=customer_segment)
+    location_options = service.get_location_options()
+    return render_template(
+        "index.html",
+        initial_snapshot=snapshot,
+        location_options=location_options,
+        refresh_seconds=current_app.config["REFRESH_SECONDS"],
+        data_mode=current_app.config["DATA_SOURCE_MODE"],
+        current_location=location,
+        current_limit=limit,
+        current_segment=customer_segment,
+    )
+
+
+@dashboard_bp.get("/operations")
+def operations_view():
+    service = _get_dashboard_service()
+    location = request.args.get("location", "")
+    limit = normalize_limit(request.args.get("limit"), default=current_app.config["HIGH_RISK_LIMIT"])
+    customer_segment = normalize_customer_segment(request.args.get("segment"))
+    snapshot = service.get_dashboard_snapshot(location=location, limit=limit, customer_segment=customer_segment)
+    location_options = service.get_location_options()
+    return render_template(
+        "operations.html",
+        initial_snapshot=snapshot,
+        location_options=location_options,
+        refresh_seconds=current_app.config["REFRESH_SECONDS"],
+        data_mode=current_app.config["DATA_SOURCE_MODE"],
+        current_location=location,
+        current_limit=limit,
+        current_segment=customer_segment,
+    )
+
+
+@dashboard_bp.get("/api/dashboard")
+def dashboard_api():
+    service = _get_dashboard_service()
+    location = request.args.get("location", "")
+    limit = normalize_limit(request.args.get("limit"), default=current_app.config["HIGH_RISK_LIMIT"])
+    customer_segment = normalize_customer_segment(request.args.get("segment"))
+    return jsonify(service.get_dashboard_snapshot(location=location, limit=limit, customer_segment=customer_segment))
