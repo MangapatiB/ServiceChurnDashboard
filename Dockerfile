@@ -2,7 +2,9 @@ FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=8080
+    PORT=8080 \
+    HOME=/tmp \
+    LOG_DIR=/tmp/logs
 
 WORKDIR /app
 
@@ -17,6 +19,10 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir gunicorn
 
 COPY . .
+
+RUN mkdir -p /tmp/logs /app/logs \
+    && chgrp -R 0 /app /tmp \
+    && chmod -R g=u /app /tmp
 
 EXPOSE 8080
 
