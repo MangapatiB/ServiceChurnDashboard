@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-churn-dashboard
+  namespace: service-churn-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-churn-dashboard
+  template:
+    metadata:
+      labels:
+        app: service-churn-dashboard
+    spec:
+      containers:
+        - name: service-churn-dashboard
+          image: image-registry.openshift-image-registry.svc:5000/service-churn-dev/service-churn-dashboard:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: service-churn-dashboard-config
+            - secretRef:
+                name: service-churn-dashboard-secret
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi

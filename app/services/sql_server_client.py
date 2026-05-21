@@ -47,7 +47,7 @@ WITH ranked_modems AS (
                         PARTITION BY UPPER(REPLACE(LTRIM(RTRIM(CONVERT(VARCHAR(255), mac))), ':', ''))
                         ORDER BY tstamp DESC
                 ) AS row_rank
-    FROM newbacondata.{self.schema}.{self.table}
+    FROM {self.database}.{self.schema}.{self.table}
     WHERE ip <> '0.0.0.0'
             AND UPPER(REPLACE(LTRIM(RTRIM(CONVERT(VARCHAR(255), mac))), ':', '')) IN ({placeholders})
 )
@@ -63,7 +63,7 @@ ORDER BY tstamp DESC
             pyodbc = __import__("pyodbc")
             connection = pyodbc.connect(self._build_connection_string(), timeout=30)
             cursor = connection.cursor()
-            cursor.execute(query, sanitized_macs)
+            cursor.execute(query, *sanitized_macs)
             column_names = [column[0] for column in cursor.description]
             rows = cursor.fetchall()
             modem_rows: dict[str, dict[str, Any]] = {}

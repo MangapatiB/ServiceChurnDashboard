@@ -1,0 +1,14 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: service-churn-dashboard
+  namespace: service-churn-dev
+spec:
+  to:
+    kind: Service
+    name: service-churn-dashboard
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
