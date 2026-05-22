@@ -93,12 +93,18 @@ ORDER BY tstamp DESC
         server_value = self.server
         if self.port and str(self.port).strip() not in {"", "1433"}:
             server_value = f"{self.server},{self.port}"
+        encrypt_value = "yes" if str(self.encrypt).strip().lower() in {"yes", "true", "1"} else "no"
+        trust_server_certificate_value = (
+            "yes" if str(self.trust_server_certificate).strip().lower() in {"yes", "true", "1"} else "no"
+        )
         return (
             f"DRIVER={{{self.driver}}};"
             f"SERVER={server_value};"
             f"DATABASE={self.database};"
             f"UID={self.username};"
             f"PWD={self.password};"
+            f"Encrypt={encrypt_value};"
+            f"TrustServerCertificate={trust_server_certificate_value};"
         )
 
     @staticmethod
