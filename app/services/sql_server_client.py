@@ -9,6 +9,8 @@ class SqlServerClient:
     def __init__(self, config: dict[str, Any]):
         self.server = config.get("MODEM_SQL_SERVER", "")
         self.port = str(config.get("MODEM_SQL_PORT", "1433"))
+        self.timeout_seconds = int(config.get("MODEM_SQL_TIMEOUT_SECONDS", 5))
+        self.batch_size = int(config.get("MODEM_SQL_BATCH_SIZE", 500))
         self.database = config.get("MODEM_SQL_DATABASE", "")
         self.username = config.get("MODEM_SQL_USERNAME", "")
         self.password = config.get("MODEM_SQL_PASSWORD", "")
@@ -37,44 +39,26 @@ class SqlServerClient:
             logger.info("Skipping modem health query because SQL Server is not configured.")
             return {}
 
-        placeholders = ", ".join("?" for _ in sanitized_macs)
-        query = f"""
-WITH ranked_modems AS (
-    SELECT
-        *,
-                UPPER(REPLACE(LTRIM(RTRIM(CONVERT(VARCHAR(255), mac))), ':', '')) AS normalized_mac_key,
-                ROW_NUMBER() OVER (
-                        PARTITION BY UPPER(REPLACE(LTRIM(RTRIM(CONVERT(VARCHAR(255), mac))), ':', ''))
-                        ORDER BY tstamp DESC
-                ) AS row_rank
-    FROM {self.database}.{self.schema}.{self.table}
-    WHERE ip <> '0.0.0.0'
-            AND UPPER(REPLACE(LTRIM(RTRIM(CONVERT(VARCHAR(255), mac))), ':', '')) IN ({placeholders})
-)
-SELECT *
-FROM ranked_modems
-WHERE row_rank = 1
-ORDER BY tstamp DESC
-""".strip()
-
         connection = None
         cursor = None
         try:
             pyodbc = __import__("pyodbc")
-            connection = pyodbc.connect(self._build_connection_string(), timeout=30)
+            connection = pyodbc.connect(self._build_connection_string(), timeout=self.timeout_seconds)
             cursor = connection.cursor()
-            cursor.execute(query, *sanitized_macs)
-            column_names = [column[0] for column in cursor.description]
-            rows = cursor.fetchall()
             modem_rows: dict[str, dict[str, Any]] = {}
-            for row in rows:
-                row_dict = {
-                    column_name: self._serialize_value(value)
-                    for column_name, value in zip(column_names, row, strict=False)
-                }
-                modem_key = self.normalize_mac_key(row_dict.get("normalized_mac_key") or row_dict.get("mac"))
-                if modem_key:
-                    modem_rows[modem_key] = row_dict
+            for batch in self._iter_batches(sanitized_macs):
+                query = self._build_modem_health_query(batch)
+                cursor.execute(query, *batch)
+                column_names = [column[0] for column in cursor.description]
+                rows = cursor.fetchall()
+                for row in rows:
+                    row_dict = {
+                        column_name: self._serialize_value(value)
+                        for column_name, value in zip(column_names, row, strict=False)
+                    }
+                    modem_key = self.normalize_mac_key(row_dict.get("normalized_mac_key") or row_dict.get("mac"))
+                    if modem_key:
+                        modem_rows[modem_key] = row_dict
             logger.info("Fetched modem health rows from SQL Server. row_count=%s", len(modem_rows))
             return modem_rows
         except ModuleNotFoundError as exc:
@@ -106,6 +90,31 @@ ORDER BY tstamp DESC
             f"Encrypt={encrypt_value};"
             f"TrustServerCertificate={trust_server_certificate_value};"
         )
+
+    def _build_modem_health_query(self, mac_addresses: list[str]) -> str:
+        placeholders = ", ".join("?" for _ in mac_addresses)
+        return f"""
+WITH ranked_modems AS (
+    SELECT
+        *,
+                UPPER(REPLACE(LTRIM(RTRIM(CONVERT(VARCHAR(255), mac))), ':', '')) AS normalized_mac_key,
+                ROW_NUMBER() OVER (
+                        PARTITION BY UPPER(REPLACE(LTRIM(RTRIM(CONVERT(VARCHAR(255), mac))), ':', ''))
+                        ORDER BY tstamp DESC
+                ) AS row_rank
+    FROM {self.database}.{self.schema}.{self.table}
+    WHERE ip <> '0.0.0.0'
+            AND UPPER(REPLACE(LTRIM(RTRIM(CONVERT(VARCHAR(255), mac))), ':', '')) IN ({placeholders})
+)
+SELECT *
+FROM ranked_modems
+WHERE row_rank = 1
+ORDER BY tstamp DESC
+""".strip()
+
+    def _iter_batches(self, items: list[str]) -> list[list[str]]:
+        batch_size = max(self.batch_size, 1)
+        return [items[index:index + batch_size] for index in range(0, len(items), batch_size)]
 
     @staticmethod
     def normalize_mac_key(value: Any) -> str:
