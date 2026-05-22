@@ -16,7 +16,7 @@ data:
   MODEM_SQL_SERVER: "sql-product"
   MODEM_SQL_PORT: "1433"
   MODEM_SQL_DATABASE: "newbacondata"
-  MODEM_SQL_DRIVER: "ODBC Driver 17 for SQL Server"
+  MODEM_SQL_DRIVER: "ODBC Driver 18 for SQL Server"
   MODEM_SQL_SCHEMA: "dbo"
   MODEM_SQL_TABLE: "cmdata2011"
   MODEM_SQL_ENCRYPT: "no"

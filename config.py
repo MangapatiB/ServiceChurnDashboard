@@ -28,7 +28,7 @@ class Config:
     MODEM_SQL_DATABASE = os.getenv("MODEM_SQL_DATABASE", "newbacondata")
     MODEM_SQL_USERNAME = os.getenv("MODEM_SQL_USERNAME", "")
     MODEM_SQL_PASSWORD = os.getenv("MODEM_SQL_PASSWORD", "")
-    MODEM_SQL_DRIVER = os.getenv("MODEM_SQL_DRIVER", "ODBC Driver 17 for SQL Server")
+    MODEM_SQL_DRIVER = os.getenv("MODEM_SQL_DRIVER", "ODBC Driver 18 for SQL Server")
     MODEM_SQL_SCHEMA = os.getenv("MODEM_SQL_SCHEMA", "dbo")
     MODEM_SQL_TABLE = os.getenv("MODEM_SQL_TABLE", "cmdata2011")
     MODEM_SQL_ENCRYPT = os.getenv("MODEM_SQL_ENCRYPT", "yes")
