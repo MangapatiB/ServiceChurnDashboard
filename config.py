@@ -25,6 +25,7 @@ class Config:
     MODEM_HEALTH_REFRESH_SECONDS = int(os.getenv("MODEM_HEALTH_REFRESH_SECONDS", "3600"))
     MODEM_SQL_SERVER = os.getenv("MODEM_SQL_SERVER", "")
     MODEM_SQL_PORT = int(os.getenv("MODEM_SQL_PORT", "1433"))
+    MODEM_SQL_TIMEOUT_SECONDS = int(os.getenv("MODEM_SQL_TIMEOUT_SECONDS", "5"))
     MODEM_SQL_DATABASE = os.getenv("MODEM_SQL_DATABASE", "newbacondata")
     MODEM_SQL_USERNAME = os.getenv("MODEM_SQL_USERNAME", "")
     MODEM_SQL_PASSWORD = os.getenv("MODEM_SQL_PASSWORD", "")

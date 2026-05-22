@@ -13,8 +13,9 @@ data:
   DATABRICKS_SQL_QUERY_FILE: "/app/queries/service_churn_dashboard.sql"
 
   MODEM_HEALTH_REFRESH_SECONDS: "3600"
-  MODEM_SQL_SERVER: "sql-product.corp.cableone.net"
+  MODEM_SQL_SERVER: "sql-productdbu.uat.corp.cableone.net"
   MODEM_SQL_PORT: "1433"
+  MODEM_SQL_TIMEOUT_SECONDS: "5"
   MODEM_SQL_DATABASE: "newbacondata"
   MODEM_SQL_DRIVER: "ODBC Driver 18 for SQL Server"
   MODEM_SQL_SCHEMA: "dbo"
