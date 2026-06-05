@@ -9,6 +9,7 @@ from app.services.middleware_cache import MiddlewareDataCache
 from app.services.mock_data import build_mock_snapshot, get_mock_locations
 from app.services.query_builders import (
     build_call_data_query,
+    build_call_data_records_query,
     build_churn_query,
     build_location_options_query,
     build_truckroll_query,
@@ -61,7 +62,7 @@ class DashboardDataService:
             churn_query = build_churn_query(subscriber_account_numbers, safe_segment)
             churn_rows = self.client.run_query(churn_query) if churn_query else []
             displayed_account_numbers = self._select_displayed_account_numbers(truckroll_rows, churn_rows, safe_limit)
-            call_rows, call_scope = self._load_call_rows(displayed_account_numbers, safe_location)
+            call_rows, call_scope = self._load_call_rows(displayed_account_numbers, safe_location, safe_segment)
             return self._build_live_snapshot(
                 truckroll_rows,
                 churn_rows,
@@ -101,10 +102,77 @@ class DashboardDataService:
             logger.exception("Failed to load live location options. Falling back to mock locations.")
             return get_mock_locations()
 
-    def _load_call_rows(self, displayed_account_numbers: list[str], location: str) -> tuple[list[Any], str]:
-        account_scoped_query = build_call_data_query(displayed_account_numbers, location)
+    def _load_call_rows(
+        self,
+        displayed_account_numbers: list[str],
+        location: str,
+        customer_segment: str,
+    ) -> tuple[list[Any], str]:
+        account_scoped_query = build_call_data_query(displayed_account_numbers, location, customer_segment)
         account_scoped_rows = self.client.run_query(account_scoped_query) if account_scoped_query else []
         return account_scoped_rows, "watchlist"
+
+    def get_call_data_records(
+        self,
+        location: str = "",
+        limit: int | None = None,
+        customer_segment: str = "res",
+    ) -> dict[str, Any]:
+        mode = self.config.get("DATA_SOURCE_MODE", "mock")
+        safe_limit = normalize_limit(limit, default=self.config.get("HIGH_RISK_LIMIT", 12))
+        safe_location = sanitize_location(location)
+        safe_segment = normalize_customer_segment(customer_segment)
+
+        if mode != "live":
+            return {
+                "meta": {
+                    "source": "mock",
+                    "status": "empty",
+                    "location": safe_location or "ALL LOCATIONS",
+                    "limit": safe_limit,
+                    "customer_segment": safe_segment,
+                    "message": "Detailed call records are only available in live mode.",
+                },
+                "rows": [],
+            }
+
+        try:
+            truckroll_rows = self.client.run_query(build_truckroll_query(safe_location, safe_limit))
+            subscriber_account_numbers = [row[1] for row in truckroll_rows if len(row) > 1]
+            churn_query = build_churn_query(subscriber_account_numbers, safe_segment)
+            churn_rows = self.client.run_query(churn_query) if churn_query else []
+            displayed_account_numbers = self._select_displayed_account_numbers(truckroll_rows, churn_rows, safe_limit)
+            call_records_query = build_call_data_records_query(displayed_account_numbers, safe_segment)
+            call_record_rows = self.client.run_query(call_records_query) if call_records_query else []
+            return {
+                "meta": {
+                    "source": "live",
+                    "status": "healthy",
+                    "location": safe_location or "ALL LOCATIONS",
+                    "limit": safe_limit,
+                    "customer_segment": safe_segment,
+                    "message": "Detailed live call records for the displayed watchlist accounts.",
+                },
+                "rows": [self._coerce_call_record_row(row) for row in call_record_rows],
+            }
+        except Exception as exc:  # noqa: BLE001
+            logger.exception(
+                "Failed to load live call data records. location=%s limit=%s segment=%s",
+                safe_location or "ALL LOCATIONS",
+                safe_limit,
+                safe_segment,
+            )
+            return {
+                "meta": {
+                    "source": "fallback",
+                    "status": "degraded",
+                    "location": safe_location or "ALL LOCATIONS",
+                    "limit": safe_limit,
+                    "customer_segment": safe_segment,
+                    "message": f"Live call data records failed: {exc}",
+                },
+                "rows": [],
+            }
 
     def _build_live_snapshot(
         self,
@@ -438,6 +506,19 @@ class DashboardDataService:
         }
 
     @staticmethod
+    def _coerce_call_record_row(row: Any) -> dict[str, Any]:
+        month_start = DashboardDataService._coerce_month_value(row[3]) if len(row) > 3 else None
+        return {
+            "customer_account": DashboardDataService._normalize_account_number(row[0]) if len(row) > 0 else "",
+            "subscriber_account": DashboardDataService._normalize_account_number(row[1]) if len(row) > 1 else "",
+            "customer_type": str(row[2]) if len(row) > 2 and row[2] is not None else "",
+            "month_start": month_start.strftime("%Y-%m") if month_start is not None else "",
+            "number_of_calls": int(row[4]) if len(row) > 4 and row[4] is not None else 0,
+            "total_duration_minutes": float(row[5]) if len(row) > 5 and row[5] is not None else 0,
+            "avg_duration_minutes": float(row[6]) if len(row) > 6 and row[6] is not None else 0,
+        }
+
+    @staticmethod
     def _coerce_month_value(value: Any) -> datetime | None:
         if value is None:
             return None
@@ -509,7 +590,7 @@ class DashboardDataService:
                 sum(row["duration_12m"] for row in account_rollups.values() if row["calls_12m"] >= 3),
                 1,
             ),
-            "one_call_6m_accounts": sum(1 for row in account_rollups.values() if row["calls_6m"] == 1),
+            "one_call_12m_accounts": sum(1 for row in account_rollups.values() if row["calls_12m"] == 1),
             "two_call_12m_accounts": sum(1 for row in account_rollups.values() if row["calls_12m"] == 2),
             "three_plus_12m_accounts": sum(1 for row in account_rollups.values() if row["calls_12m"] >= 3),
         }
@@ -543,9 +624,9 @@ class DashboardDataService:
             ],
             "segments": [
                 {
-                    "label": "1 call in 6 months",
-                    "value": percentage(summary_row['one_call_6m_accounts']),
-                    "detail": f"{summary_row['one_call_6m_accounts']} accounts had exactly one authenticated call in the last 6 months.",
+                    "label": "1 call in 6-12 months",
+                    "value": percentage(summary_row['one_call_12m_accounts']),
+                    "detail": f"{summary_row['one_call_12m_accounts']} accounts had exactly one authenticated call in the last 12 months.",
                 },
                 {
                     "label": "2 calls in 6-12 months",

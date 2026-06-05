@@ -17,6 +17,7 @@
         </div>
         <div class="topbar__meta">
             <a class="topbar__pill topbar__link" href="{{ url_for('dashboard.dashboard_home', location=current_location, limit=current_limit, segment=current_segment) }}">Main dashboard</a>
+            <a class="topbar__pill topbar__link" href="{{ url_for('dashboard.call_data_view', location=current_location, limit=current_limit, segment=current_segment) }}">Call data records</a>
             <span class="topbar__pill">{{ data_mode|upper }} mode</span>
             <span class="topbar__pill">{{ refresh_seconds }}s refresh</span>
             <details class="about-menu">

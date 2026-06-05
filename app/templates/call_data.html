@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Call Data Records{% endblock %}
+
+{% block body %}
+<div class="page-shell">
+    <div class="topbar">
+        <div class="brand-lockup" aria-label="Sparklight service churn dashboard">
+            <img
+                class="brand-lockup__banner"
+                src="{{ url_for('static', filename='img/sparklight-banner.webp') }}"
+                alt="Sparklight banner"
+            >
+            <div class="brand-lockup__copy">
+                <p class="brand-lockup__title">Service Churn Dashboard</p>
+            </div>
+        </div>
+        <div class="topbar__meta">
+            <a class="topbar__pill topbar__link" href="{{ url_for('dashboard.dashboard_home', location=current_location, limit=current_limit, segment=current_segment) }}">Main dashboard</a>
+            <a class="topbar__pill topbar__link" href="{{ url_for('dashboard.operations_view', location=current_location, limit=current_limit, segment=current_segment) }}">Operations view</a>
+            <span class="topbar__pill">{{ data_mode|upper }} mode</span>
+            <span class="topbar__pill">{{ refresh_seconds }}s refresh</span>
+            <details class="about-menu">
+                <summary class="topbar__pill about-menu__toggle">About</summary>
+                <div class="about-menu__panel">
+                    <p>Use this view to inspect the detailed call-data rows behind the main dashboard call summary.</p>
+                    <p>The filters match the main watchlist so the records stay aligned with the displayed accounts.</p>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <main class="dashboard-grid">
+        <section class="panel panel--full panel--overview">
+            <div class="panel__header">
+                <div>
+                    <p class="section-kicker">Call data view</p>
+                    <h2>Detailed call records</h2>
+                    <p class="panel__description">Review the grouped call-data records for the same watchlist slice used on the main dashboard.</p>
+                </div>
+            </div>
+            <form class="dashboard-filters" method="get" action="{{ url_for('dashboard.call_data_view') }}">
+                <label class="filter-field">
+                    <span>Customer type</span>
+                    <select name="segment">
+                        <option value="res" {% if current_segment == 'res' %}selected{% endif %}>Residential</option>
+                        <option value="com" {% if current_segment == 'com' %}selected{% endif %}>Business</option>
+                    </select>
+                </label>
+                <label class="filter-field">
+                    <span>Billing city</span>
+                    <select name="location">
+                        <option value="" {% if not current_location %}selected{% endif %}>All locations</option>
+                        {% for location in location_options %}
+                        <option value="{{ location }}" {% if current_location|upper == location %}selected{% endif %}>{{ location }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="filter-field">
+                    <span>Limit</span>
+                    <input name="limit" type="number" min="1" max="100000" value="{{ current_limit }}">
+                </label>
+                <button class="refresh-button" type="submit">Apply filters</button>
+            </form>
+            <p class="panel__description panel__description--compact">{{ call_data.meta.message }}</p>
+        </section>
+
+        <section class="panel panel--full">
+            <div class="panel__header">
+                <div>
+                    <p class="section-kicker">Call data view</p>
+                    <h2>Call data records</h2>
+                    <p class="panel__description">Showing detailed call records for {{ call_data.meta.location }} · {{ 'Business' if current_segment == 'com' else 'Residential' }} · limit {{ current_limit }}.</p>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Customer account</th>
+                            <th>Subscriber account</th>
+                            <th>Customer type</th>
+                            <th>Month</th>
+                            <th>Number of calls</th>
+                            <th>Total duration (min)</th>
+                            <th>Average duration (min)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if call_data.rows %}
+                            {% for item in call_data.rows %}
+                            <tr>
+                                <td>{{ item.customer_account }}</td>
+                                <td>{{ item.subscriber_account }}</td>
+                                <td>{{ item.customer_type }}</td>
+                                <td>{{ item.month_start or '-' }}</td>
+                                <td>{{ item.number_of_calls }}</td>
+                                <td>{{ '%.2f'|format(item.total_duration_minutes) }}</td>
+                                <td>{{ '%.2f'|format(item.avg_duration_minutes) }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7">
+                                    <div class="empty-state empty-state--table">No call data records matched the current filter.</div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}

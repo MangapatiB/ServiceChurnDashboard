@@ -55,6 +55,27 @@ def operations_view():
     )
 
 
+@dashboard_bp.get("/call-data")
+def call_data_view():
+    service = _get_dashboard_service()
+    location = request.args.get("location", "")
+    limit = normalize_limit(request.args.get("limit"), default=current_app.config["HIGH_RISK_LIMIT"])
+    customer_segment = normalize_customer_segment(request.args.get("segment"))
+    call_data = service.get_call_data_records(location=location, limit=limit, customer_segment=customer_segment)
+    location_options = service.get_location_options()
+    return render_template(
+        "call_data.html",
+        initial_snapshot=None,
+        call_data=call_data,
+        location_options=location_options,
+        refresh_seconds=current_app.config["REFRESH_SECONDS"],
+        data_mode=current_app.config["DATA_SOURCE_MODE"],
+        current_location=location,
+        current_limit=limit,
+        current_segment=customer_segment,
+    )
+
+
 @dashboard_bp.get("/api/dashboard")
 def dashboard_api():
     service = _get_dashboard_service()

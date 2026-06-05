@@ -205,48 +205,102 @@ ORDER BY churn_probability DESC
 """.strip()
 
 
-def build_call_data_query(account_numbers: list[str] | None = None, location: str = "") -> str:
+def build_call_data_query(
+    account_numbers: list[str] | None = None,
+    location: str = "",
+    customer_segment: str = "res",
+) -> str:
     sanitized_accounts = _sanitize_account_numbers(account_numbers or [])
+    safe_segment = normalize_customer_segment(customer_segment)
+    customer_type_code = "COM" if safe_segment == "com" else "RES"
     account_filter_clause = ""
     if sanitized_accounts:
         account_filter_clause = (
-            "AND get_json_object(it.CustomData, '$.data.AccountNumber') IN "
+            "AND ("
+            "CAST(ctn.SUB_ACCT_NO_CTN AS STRING) IN "
+            f"({', '.join(quote_sql_string(account) for account in sanitized_accounts)}) "
+            "OR CAST(ctn.CUST_ACCT_NO_CTN AS STRING) IN "
             f"({', '.join(quote_sql_string(account) for account in sanitized_accounts)})"
+            ")"
         )
 
     return f"""
 WITH Phone_call AS (
     SELECT
-        COUNT(DISTINCT it.ContactId) AS NumberOfCalls,
-        get_json_object(it.CustomData, '$.data.AccountNumber') AS AccountNumber,
-        DATE_TRUNC('month', it.DateAdded) AS MonthStart,
-        DATE_TRUNC('month', cx.ContactStart) AS ContactMonthStart,
-        ROUND(AVG(cx.AgentSeconds) / 60, 2) AS AverageAgentTalkmin,
+        COUNT(*) AS NumberOfCalls,
+        CAST(ctn.SUB_ACCT_NO_CTN AS STRING) AS AccountNumber,
+        DATE_TRUNC('month', ctn.START_DTE_TME_CTN) AS MonthStart,
+        DATE_TRUNC('month', ctn.START_DTE_TME_CTN) AS ContactMonthStart,
         ROUND(AVG(
-            COALESCE(cx.AgentSeconds, 0)
-            + COALESCE(cx.HoldSeconds, 0)
-            + COALESCE(cx.ConfSeconds, 0)
-            + COALESCE(cx.AcwSeconds, 0)
-        ) / 60, 2) AS AverageTotalContactDurationmin,
-        ROUND(SUM(cx.AgentSeconds) / 60, 2) AS TotalAgentTalkmin,
+            (unix_timestamp(ctn.FINISH_DTE_TME_CTN) - unix_timestamp(ctn.START_DTE_TME_CTN)) / 60.0
+        ), 2) AS AverageAgentTalkmin,
+        ROUND(AVG(
+            (unix_timestamp(ctn.FINISH_DTE_TME_CTN) - unix_timestamp(ctn.START_DTE_TME_CTN)) / 60.0
+        ), 2) AS AverageTotalContactDurationmin,
         ROUND(SUM(
-            COALESCE(cx.AgentSeconds, 0)
-            + COALESCE(cx.HoldSeconds, 0)
-            + COALESCE(cx.ConfSeconds, 0)
-            + COALESCE(cx.AcwSeconds, 0)
-        ) / 60, 3) AS TotalContactDurationmin
-    FROM prod.bronze.niceivrlog_ivrlogrecord it
-    JOIN prod.silver.nicecxone_contactscompleted cx
-        ON it.ContactId = cx.ContactId
-    WHERE it.ActionName LIKE 'IVRLOG_Authentication'
-      AND it.CustomData LIKE '%AccountNumber%'
-      AND DATE_TRUNC('month', it.DateAdded) = DATE_TRUNC('month', cx.ContactStart)
-      AND cx.AgentSeconds IS NOT NULL
+            (unix_timestamp(ctn.FINISH_DTE_TME_CTN) - unix_timestamp(ctn.START_DTE_TME_CTN)) / 60.0
+        ), 2) AS TotalAgentTalkmin,
+        ROUND(SUM(
+            (unix_timestamp(ctn.FINISH_DTE_TME_CTN) - unix_timestamp(ctn.START_DTE_TME_CTN)) / 60.0
+        ), 2) AS TotalContactDurationmin
+    FROM prod.bronze.dnadatawarehouse_ctn_interaction ctn
+    INNER JOIN prod.bronze.dnadatawarehouse_sbb_base sbb
+        ON ctn.CUST_ACCT_NO_CTN = sbb.CUST_ACCT_NO_SBB
+    WHERE ctn.INTR_TYP_CTN IN ('Call In', 'Outbound Call')
+      AND ctn.START_DTE_CTN >= DATE_ADD(CURRENT_DATE(), -365)
+      AND ctn.SUB_ACCT_NO_CTN IS NOT NULL
+      AND UPPER(TRIM(sbb.CUST_TYP_SBB)) = '{customer_type_code}'
       {account_filter_clause}
     GROUP BY
-        get_json_object(it.CustomData, '$.data.AccountNumber'),
-        DATE_TRUNC('month', it.DateAdded),
-        DATE_TRUNC('month', cx.ContactStart)
+        CAST(ctn.SUB_ACCT_NO_CTN AS STRING),
+        DATE_TRUNC('month', ctn.START_DTE_TME_CTN)
 )
 SELECT * FROM Phone_call
+""".strip()
+
+
+def build_call_data_records_query(account_numbers: list[str] | None = None, customer_segment: str = "res") -> str:
+    sanitized_accounts = _sanitize_account_numbers(account_numbers or [])
+    if not sanitized_accounts:
+        return ""
+
+    safe_segment = normalize_customer_segment(customer_segment)
+    customer_type_code = "COM" if safe_segment == "com" else "RES"
+
+    account_filter_clause = (
+        "AND ("
+        "CAST(ctn.SUB_ACCT_NO_CTN AS STRING) IN "
+        f"({', '.join(quote_sql_string(account) for account in sanitized_accounts)}) "
+        "OR CAST(ctn.CUST_ACCT_NO_CTN AS STRING) IN "
+        f"({', '.join(quote_sql_string(account) for account in sanitized_accounts)})"
+        ")"
+    )
+
+    return f"""
+SELECT
+    CAST(ctn.CUST_ACCT_NO_CTN AS STRING) AS CustomerAccount,
+    CAST(ctn.SUB_ACCT_NO_CTN AS STRING) AS SubscriberAccount,
+    sbb.CUST_TYP_SBB AS CustomerType,
+    DATE_TRUNC('month', ctn.START_DTE_TME_CTN) AS MonthStart,
+    COUNT(*) AS NumberOfCalls,
+    ROUND(SUM(
+        (unix_timestamp(ctn.FINISH_DTE_TME_CTN) - unix_timestamp(ctn.START_DTE_TME_CTN)) / 60.0
+    ), 2) AS TotalDurationMinutes,
+    ROUND(AVG(
+        (unix_timestamp(ctn.FINISH_DTE_TME_CTN) - unix_timestamp(ctn.START_DTE_TME_CTN)) / 60.0
+    ), 2) AS AvgDurationMinutes
+FROM prod.bronze.dnadatawarehouse_ctn_interaction ctn
+INNER JOIN prod.bronze.dnadatawarehouse_sbb_base sbb
+    ON ctn.CUST_ACCT_NO_CTN = sbb.CUST_ACCT_NO_SBB
+WHERE ctn.INTR_TYP_CTN IN ('Call In', 'Outbound Call')
+  AND ctn.START_DTE_CTN >= DATE_ADD(CURRENT_DATE(), -365)
+  AND ctn.SUB_ACCT_NO_CTN IS NOT NULL
+    AND UPPER(TRIM(sbb.CUST_TYP_SBB)) = '{customer_type_code}'
+  {account_filter_clause}
+GROUP BY
+    CAST(ctn.CUST_ACCT_NO_CTN AS STRING),
+    CAST(ctn.SUB_ACCT_NO_CTN AS STRING),
+    sbb.CUST_TYP_SBB,
+    DATE_TRUNC('month', ctn.START_DTE_TME_CTN)
+ORDER BY MonthStart DESC, NumberOfCalls DESC
 """.strip()
