@@ -129,3 +129,46 @@ spec:
   tls:
     termination: edge
     insecureEdgeTerminationPolicy: Redirect
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: service-churn-dashboard-scheduler
+  namespace: service-churn-dev
+spec:
+  schedule: "0 19 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: service-churn-dashboard-scheduler
+              image: image-registry.openshift-image-registry.svc:5000/service-churn-dev/service-churn-dashboard:latest
+              imagePullPolicy: Always
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  cd /app/schedular
+                  for file in run_*.py; do
+                    echo "Running $file"
+                    python "$file"
+                  done
+              envFrom:
+                - configMapRef:
+                    name: service-churn-dashboard-config
+                - secretRef:
+                    name: service-churn-dashboard-secret
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 1000m
+                  memory: 2Gi
