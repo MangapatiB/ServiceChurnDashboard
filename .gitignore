@@ -4,3 +4,5 @@ venv/
 .env
 .vscode/
 deploy/openshift/secret.yaml
+
+.venv/
