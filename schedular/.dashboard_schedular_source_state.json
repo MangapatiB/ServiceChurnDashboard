@@ -1,0 +1,28 @@
+{
+  "source_fingerprints": {
+    "dbo.service_churn_truckroll_base": {
+      "row_count": 53925,
+      "hash_total": "496907178229538533516863"
+    },
+    "dbo.service_churn_account_mac_map": {
+      "row_count": 700602,
+      "hash_total": "6463527041370379922296047"
+    },
+    "dbo.service_churn_modem_health_latest": {
+      "row_count": 913520,
+      "hash_total": "8425824083796024927488032"
+    },
+    "dbo.service_churn_res_latest": {
+      "row_count": 904748,
+      "hash_total": "8351846843493356423520890"
+    },
+    "dbo.service_churn_com_latest": {
+      "row_count": 103792,
+      "hash_total": "956739450994282447869883"
+    },
+    "dbo.service_churn_call_monthly_agg": {
+      "row_count": 728536,
+      "hash_total": "6723871123473801815013016"
+    }
+  }
+}
