@@ -10,7 +10,6 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from app import create_app
 from app.services.data_service import DashboardDataService
-from app.services.query_builders import build_churn_query, build_truckroll_query
 
 
 def parse_args() -> argparse.Namespace:
@@ -31,11 +30,10 @@ def main() -> int:
     service = DashboardDataService(app.config)
     limit = args.limit or app.config.get("HIGH_RISK_LIMIT", 12)
 
-    truckroll_rows = service.client.run_query(build_truckroll_query(args.location, limit))
+    truckroll_rows = service.client.fetch_truckroll_rows(args.location, limit)
     truckroll_accounts = [service._normalize_account_number(row[1]) for row in truckroll_rows if len(row) > 1 and row[1] is not None]
 
-    churn_query = build_churn_query(truckroll_accounts)
-    churn_rows = service.client.run_query(churn_query) if churn_query else []
+    churn_rows = service.client.fetch_churn_rows(truckroll_accounts, "res")
     matched_accounts = {service._normalize_account_number(row[0]) for row in churn_rows if len(row) > 0 and row[0] is not None}
     unmatched_accounts = [account for account in truckroll_accounts if account not in matched_accounts]
 

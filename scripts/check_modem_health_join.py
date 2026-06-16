@@ -10,11 +10,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from app import create_app
 from app.services.data_service import DashboardDataService
-from app.services.query_builders import (
-    build_account_mac_mapping_subset_query,
-    build_truckroll_query,
-)
-from app.services.sql_server_client import SqlServerClient
+from app.services.dashboard_sql_client import DashboardSqlClient
 
 
 def parse_args() -> argparse.Namespace:
@@ -50,30 +46,25 @@ def main() -> int:
     args = parse_args()
     app = create_app()
     service = DashboardDataService(app.config)
-    sql_client = SqlServerClient(app.config)
+    sql_client = DashboardSqlClient(app.config)
 
     if args.account:
         account_numbers = [service._normalize_account_number(account) for account in args.account if account]
         truckroll_rows = []
     else:
-        truckroll_rows = service.client.run_query(build_truckroll_query(args.location, args.limit))
+        truckroll_rows = service.client.fetch_truckroll_rows(args.location, args.limit)
         account_numbers = [
             service._normalize_account_number(row[1])
             for row in truckroll_rows
             if len(row) > 1 and row[1] is not None
         ]
 
-    mapping_query = build_account_mac_mapping_subset_query(account_numbers)
-    mapping_rows = service.client.run_query(mapping_query) if mapping_query else []
+    account_to_mac = sql_client.fetch_account_mac_map(account_numbers)
 
-    account_to_mac = {}
-    for row in mapping_rows:
-        if len(row) < 2:
-            continue
-        account_number = service._normalize_account_number(row[0])
-        modem_mac = sql_client.normalize_mac_key(row[1])
-        if account_number and modem_mac:
-            account_to_mac[account_number] = modem_mac
+    mapping_rows = [
+        {"account_number": account_number, "modem_mac": modem_mac}
+        for account_number, modem_mac in account_to_mac.items()
+    ]
 
     modem_rows = sql_client.fetch_latest_modem_health(list(account_to_mac.values())) if account_to_mac else {}
     joined_rows = []
@@ -94,14 +85,14 @@ def main() -> int:
             "data_source_mode": app.config.get("DATA_SOURCE_MODE"),
             "location": args.location or "ALL LOCATIONS",
             "limit": args.limit,
-            "sql_server": app.config.get("MODEM_SQL_SERVER"),
-            "sql_database": app.config.get("MODEM_SQL_DATABASE"),
+            "sql_server": app.config.get("DASHBOARD_SQL_SERVER"),
+            "sql_database": app.config.get("DASHBOARD_SQL_DATABASE"),
         },
         args.pretty,
     )
     _dump("Truckroll sample", truckroll_rows[: args.limit], args.pretty)
     _dump("Account sample", account_numbers, args.pretty)
-    _dump("Databricks account-to-MAC mapping", mapping_rows, args.pretty)
+    _dump("Dashboard account-to-MAC mapping", mapping_rows, args.pretty)
     _dump("SQL modem rows", modem_rows, args.pretty)
     _dump("Joined node health rows", joined_rows, args.pretty)
     return 0
