@@ -4,15 +4,10 @@ from datetime import datetime
 import logging
 from typing import Any
 
-from app.services.databricks_client import DatabricksClient
+from app.services.dashboard_sql_client import DashboardSqlClient
 from app.services.middleware_cache import MiddlewareDataCache
 from app.services.mock_data import build_mock_snapshot, get_mock_locations
 from app.services.query_builders import (
-    build_call_data_query,
-    build_call_data_records_query,
-    build_churn_query,
-    build_location_options_query,
-    build_truckroll_query,
     normalize_customer_segment,
     normalize_limit,
     sanitize_location,
@@ -25,7 +20,7 @@ logger = logging.getLogger(__name__)
 class DashboardDataService:
     def __init__(self, config: dict[str, Any]):
         self.config = config
-        self.client = DatabricksClient(config)
+        self.client = DashboardSqlClient(config)
         self.middleware_cache = MiddlewareDataCache(config)
 
     def get_dashboard_snapshot(
@@ -57,12 +52,16 @@ class DashboardDataService:
             return snapshot
 
         try:
-            truckroll_rows = self.client.run_query(build_truckroll_query(safe_location, safe_limit))
+            truckroll_rows = self.client.fetch_truckroll_rows(safe_location, safe_limit)
             subscriber_account_numbers = [row[1] for row in truckroll_rows if len(row) > 1]
-            churn_query = build_churn_query(subscriber_account_numbers, safe_segment)
-            churn_rows = self.client.run_query(churn_query) if churn_query else []
+            churn_rows = self.client.fetch_churn_rows(subscriber_account_numbers, safe_segment)
             displayed_account_numbers = self._select_displayed_account_numbers(truckroll_rows, churn_rows, safe_limit)
-            call_rows, call_scope = self._load_call_rows(displayed_account_numbers, safe_location, safe_segment)
+            displayed_subscriber_accounts = self._select_displayed_subscriber_account_numbers(
+                truckroll_rows,
+                churn_rows,
+                safe_limit,
+            )
+            call_rows, call_scope = self._load_call_rows(displayed_subscriber_accounts, safe_segment)
             return self._build_live_snapshot(
                 truckroll_rows,
                 churn_rows,
@@ -82,7 +81,7 @@ class DashboardDataService:
             snapshot = build_mock_snapshot()
             snapshot["meta"]["source"] = "fallback"
             snapshot["meta"]["status"] = "degraded"
-            snapshot["meta"]["message"] = f"Live Databricks query failed: {exc}"
+            snapshot["meta"]["message"] = f"Live dashboard table query failed: {exc}"
             snapshot["meta"]["location"] = safe_location or "ALL LOCATIONS"
             snapshot["meta"]["limit"] = safe_limit
             snapshot["meta"]["customer_segment"] = safe_segment
@@ -95,8 +94,7 @@ class DashboardDataService:
             return get_mock_locations()
 
         try:
-            rows = self.client.run_query(build_location_options_query())
-            locations = sorted({str(row[0]).strip() for row in rows if len(row) > 0 and row[0] is not None})
+            locations = sorted(self.client.fetch_location_options())
             return locations or get_mock_locations()
         except Exception:  # noqa: BLE001
             logger.exception("Failed to load live location options. Falling back to mock locations.")
@@ -104,12 +102,10 @@ class DashboardDataService:
 
     def _load_call_rows(
         self,
-        displayed_account_numbers: list[str],
-        location: str,
+        displayed_subscriber_account_numbers: list[str],
         customer_segment: str,
     ) -> tuple[list[Any], str]:
-        account_scoped_query = build_call_data_query(displayed_account_numbers, location, customer_segment)
-        account_scoped_rows = self.client.run_query(account_scoped_query) if account_scoped_query else []
+        account_scoped_rows = self.client.fetch_call_monthly_rows(displayed_subscriber_account_numbers, customer_segment)
         return account_scoped_rows, "watchlist"
 
     def get_call_data_records(
@@ -137,13 +133,11 @@ class DashboardDataService:
             }
 
         try:
-            truckroll_rows = self.client.run_query(build_truckroll_query(safe_location, safe_limit))
+            truckroll_rows = self.client.fetch_truckroll_rows(safe_location, safe_limit)
             subscriber_account_numbers = [row[1] for row in truckroll_rows if len(row) > 1]
-            churn_query = build_churn_query(subscriber_account_numbers, safe_segment)
-            churn_rows = self.client.run_query(churn_query) if churn_query else []
+            churn_rows = self.client.fetch_churn_rows(subscriber_account_numbers, safe_segment)
             displayed_account_numbers = self._select_displayed_account_numbers(truckroll_rows, churn_rows, safe_limit)
-            call_records_query = build_call_data_records_query(displayed_account_numbers, safe_segment)
-            call_record_rows = self.client.run_query(call_records_query) if call_records_query else []
+            call_record_rows = self.client.fetch_call_record_rows(displayed_account_numbers, safe_segment)
             return {
                 "meta": {
                     "source": "live",
@@ -151,7 +145,7 @@ class DashboardDataService:
                     "location": safe_location or "ALL LOCATIONS",
                     "limit": safe_limit,
                     "customer_segment": safe_segment,
-                    "message": "Detailed live call records for the displayed watchlist accounts.",
+                    "message": "Detailed live call records from dashboard SQL tables for the displayed watchlist accounts.",
                 },
                 "rows": [self._coerce_call_record_row(row) for row in call_record_rows],
             }
@@ -169,7 +163,7 @@ class DashboardDataService:
                     "location": safe_location or "ALL LOCATIONS",
                     "limit": safe_limit,
                     "customer_segment": safe_segment,
-                    "message": f"Live call data records failed: {exc}",
+                    "message": f"Live call data records table query failed: {exc}",
                 },
                 "rows": [],
             }
@@ -271,7 +265,7 @@ class DashboardDataService:
         geo_summary = self._build_geo_summary(markets)
 
         snapshot["meta"]["message"] = (
-            f"Live watchlist built from truckroll predictions and churn drivers for {snapshot['meta']['location']}."
+            f"Live watchlist built from ServiceChurnDashboard SQL tables for {snapshot['meta']['location']}."
         )
         snapshot["kpis"] = [
             {"label": "Flagged accounts", "value": f"{len(customers)}", "delta": f"Limit {limit}", "tone": "risk"},
@@ -490,6 +484,44 @@ class DashboardDataService:
                     continue
                 seen_accounts.add(account_key)
                 selected_accounts.append(account_key)
+        return selected_accounts
+
+    @classmethod
+    def _select_displayed_subscriber_account_numbers(
+        cls,
+        truckroll_rows: list[Any],
+        churn_rows: list[Any],
+        limit: int,
+    ) -> list[str]:
+        churn_by_account = {}
+        for record in churn_rows:
+            if len(record) < 6:
+                continue
+            churn_record = cls._coerce_churn_row(record)
+            if churn_record["customer_id"]:
+                churn_by_account[churn_record["customer_id"]] = churn_record
+
+        customers = []
+        for row in truckroll_rows:
+            truckroll_record = cls._coerce_truckroll_row(row)
+            churn_record = churn_by_account.get(truckroll_record["customer_id"], {})
+            churn_probability = float(churn_record.get("risk_score", 0))
+            customers.append(
+                {
+                    "customer_id": truckroll_record["customer_id"],
+                    "risk_score": int(round(churn_probability)),
+                }
+            )
+
+        customers.sort(key=lambda item: item["risk_score"], reverse=True)
+        selected_accounts = []
+        seen_accounts = set()
+        for customer in customers[:limit]:
+            customer_id = customer.get("customer_id", "")
+            if not customer_id or customer_id in seen_accounts:
+                continue
+            seen_accounts.add(customer_id)
+            selected_accounts.append(customer_id)
         return selected_accounts
 
     @staticmethod

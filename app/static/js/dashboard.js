@@ -16,12 +16,22 @@ const state = {
   segment: bootstrap.currentSegment || "res",
   location: bootstrap.currentLocation || "",
   limit: bootstrap.currentLimit || 12,
+  maxLimit: Number(bootstrap.maxDashboardLimit || 1000),
   customerPage: 0,
   customerPageSize: 15,
   customerSort: customerSortInput?.value || "desc",
   snapshot: bootstrap.initialSnapshot || null,
   refreshTimerId: null,
+  isFetching: false,
 };
+
+function clampLimit(value) {
+  const parsed = Number(value || state.limit || 12);
+  if (!Number.isFinite(parsed)) {
+    return Math.min(12, state.maxLimit);
+  }
+  return Math.max(1, Math.min(parsed, state.maxLimit));
+}
 
 function getSortedCustomers(items) {
   const direction = state.customerSort === "asc" ? 1 : -1;
@@ -447,14 +457,20 @@ function render(snapshot) {
 }
 
 async function fetchSnapshot() {
+  if (state.isFetching) {
+    return;
+  }
+  state.isFetching = true;
   const originalLabel = refreshButton?.textContent || "Apply filters";
-  refreshButton.disabled = true;
-  refreshButton.textContent = "Updating...";
+  if (refreshButton) {
+    refreshButton.disabled = true;
+    refreshButton.textContent = "Updating...";
+  }
   try {
     const params = new URLSearchParams({
       segment: state.segment,
       location: state.location,
-      limit: String(state.limit),
+      limit: String(clampLimit(state.limit)),
     });
     const response = await fetch(`${state.endpoint}?${params.toString()}`, { headers: { Accept: "application/json" } });
     if (!response.ok) {
@@ -479,8 +495,11 @@ async function fetchSnapshot() {
       statusMessage.textContent = error.message || "Dashboard refresh failed.";
     }
   } finally {
-    refreshButton.disabled = false;
-    refreshButton.textContent = originalLabel;
+    state.isFetching = false;
+    if (refreshButton) {
+      refreshButton.disabled = false;
+      refreshButton.textContent = originalLabel;
+    }
   }
 }
 
@@ -488,7 +507,10 @@ filtersForm?.addEventListener("submit", (event) => {
   event.preventDefault();
   state.segment = (segmentInput?.value || "res").trim().toLowerCase() === "com" ? "com" : "res";
   state.location = (locationInput?.value || "").trim();
-  state.limit = Number(limitInput?.value || state.limit || 12);
+  state.limit = clampLimit(limitInput?.value || state.limit || 12);
+  if (limitInput) {
+    limitInput.value = String(state.limit);
+  }
   fetchSnapshot();
 });
 

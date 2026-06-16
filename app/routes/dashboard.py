@@ -19,7 +19,11 @@ def _get_dashboard_service() -> DashboardDataService:
 def dashboard_home():
     service = _get_dashboard_service()
     location = request.args.get("location", "")
-    limit = normalize_limit(request.args.get("limit"), default=current_app.config["HIGH_RISK_LIMIT"])
+    limit = normalize_limit(
+        request.args.get("limit"),
+        default=current_app.config["HIGH_RISK_LIMIT"],
+        maximum=current_app.config["MAX_DASHBOARD_LIMIT"],
+    )
     customer_segment = normalize_customer_segment(request.args.get("segment"))
     snapshot = service.get_dashboard_snapshot(location=location, limit=limit, customer_segment=customer_segment)
     location_options = service.get_location_options()
@@ -32,6 +36,7 @@ def dashboard_home():
         current_location=location,
         current_limit=limit,
         current_segment=customer_segment,
+        max_dashboard_limit=current_app.config["MAX_DASHBOARD_LIMIT"],
     )
 
 
@@ -39,7 +44,11 @@ def dashboard_home():
 def operations_view():
     service = _get_dashboard_service()
     location = request.args.get("location", "")
-    limit = normalize_limit(request.args.get("limit"), default=current_app.config["HIGH_RISK_LIMIT"])
+    limit = normalize_limit(
+        request.args.get("limit"),
+        default=current_app.config["HIGH_RISK_LIMIT"],
+        maximum=current_app.config["MAX_DASHBOARD_LIMIT"],
+    )
     customer_segment = normalize_customer_segment(request.args.get("segment"))
     snapshot = service.get_dashboard_snapshot(location=location, limit=limit, customer_segment=customer_segment)
     location_options = service.get_location_options()
@@ -52,6 +61,7 @@ def operations_view():
         current_location=location,
         current_limit=limit,
         current_segment=customer_segment,
+        max_dashboard_limit=current_app.config["MAX_DASHBOARD_LIMIT"],
     )
 
 
@@ -59,7 +69,11 @@ def operations_view():
 def call_data_view():
     service = _get_dashboard_service()
     location = request.args.get("location", "")
-    limit = normalize_limit(request.args.get("limit"), default=current_app.config["HIGH_RISK_LIMIT"])
+    limit = normalize_limit(
+        request.args.get("limit"),
+        default=current_app.config["HIGH_RISK_LIMIT"],
+        maximum=current_app.config["MAX_DASHBOARD_LIMIT"],
+    )
     customer_segment = normalize_customer_segment(request.args.get("segment"))
     call_data = service.get_call_data_records(location=location, limit=limit, customer_segment=customer_segment)
     location_options = service.get_location_options()
@@ -73,6 +87,7 @@ def call_data_view():
         current_location=location,
         current_limit=limit,
         current_segment=customer_segment,
+        max_dashboard_limit=current_app.config["MAX_DASHBOARD_LIMIT"],
     )
 
 
@@ -80,6 +95,10 @@ def call_data_view():
 def dashboard_api():
     service = _get_dashboard_service()
     location = request.args.get("location", "")
-    limit = normalize_limit(request.args.get("limit"), default=current_app.config["HIGH_RISK_LIMIT"])
+    limit = normalize_limit(
+        request.args.get("limit"),
+        default=current_app.config["HIGH_RISK_LIMIT"],
+        maximum=current_app.config["MAX_DASHBOARD_LIMIT"],
+    )
     customer_segment = normalize_customer_segment(request.args.get("segment"))
     return jsonify(service.get_dashboard_snapshot(location=location, limit=limit, customer_segment=customer_segment))

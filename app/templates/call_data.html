@@ -58,7 +58,7 @@
                 </label>
                 <label class="filter-field">
                     <span>Limit</span>
-                    <input name="limit" type="number" min="1" max="100000" value="{{ current_limit }}">
+                    <input name="limit" type="number" min="1" max="{{ max_dashboard_limit }}" value="{{ current_limit }}">
                 </label>
                 <button class="refresh-button" type="submit">Apply filters</button>
             </form>

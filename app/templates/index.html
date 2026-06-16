@@ -31,7 +31,7 @@
                     <p>Start with the KPI band to see overall pressure and movement.</p>
                     <p>Use signal mix and tier playbooks to understand why markets are trending.</p>
                     <p>Move into watchlists to assign geo and customer-level actions.</p>
-                    <p>In live mode the dashboard queries Databricks directly. If those queries fail, the page can fall back to seeded data until access is restored.</p>
+                    <p>In live mode the dashboard reads from ServiceChurnDashboard SQL tables. If those reads fail, the page can fall back to seeded data until access is restored.</p>
                     <p><strong>How teams should respond:</strong> Each tier maps the observed risk posture to an expected operating response, keeping care and field actions aligned.</p>
                     <p><strong>Tier 1:</strong> Immediate contact queue. 0 accounts are at 90+ churn risk and should move to same-day outbound call and SMS outreach.</p>
                     <p><strong>Tier 2:</strong> Retention worklist. Customers with elevated churn drivers but lower urgency should be queued for proactive contact and service follow-up.</p>
@@ -71,7 +71,7 @@
                 </label>
                 <label class="filter-field">
                     <span>Limit</span>
-                    <input id="limit-input" name="limit" type="number" min="1" max="100000" value="{{ current_limit }}">
+                    <input id="limit-input" name="limit" type="number" min="1" max="{{ max_dashboard_limit }}" value="{{ current_limit }}">
                 </label>
                 <button class="refresh-button" id="refresh-button" type="submit">Apply filters</button>
             </form>
@@ -160,7 +160,7 @@
                 <div>
                     <p class="section-kicker">Modem health</p>
                     <h2>Latest modem telemetry</h2>
-                    <p class="panel__description">Join Databricks account-to-MAC mappings with SQL Server modem rows so the watchlist shows the latest reachable modem sample for each account.</p>
+                    <p class="panel__description">Join dashboard account-to-MAC and modem-health tables so the watchlist shows the latest reachable modem sample for each account.</p>
                 </div>
             </div>
             <div class="mini-kpi-grid" id="plant-kpi-grid"></div>
