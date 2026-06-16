@@ -26,10 +26,6 @@ data:
   DASHBOARD_SQL_ACCOUNT_MAC_TABLE: "service_churn_account_mac_map"
   DASHBOARD_SQL_MODEM_HEALTH_TABLE: "service_churn_modem_health_latest"
 
-  DATABRICKS_HOST: "https://adb-2499533172944623.3.azuredatabricks.net"
-  DATABRICKS_WAREHOUSE_ID: "926835bd268bdeb0"
-  DATABRICKS_SQL_QUERY_FILE: "/app/queries/service_churn_dashboard.sql"
-
   MODEM_HEALTH_REFRESH_SECONDS: "3600"
   MODEM_SQL_SERVER: "sql-productdbu.uat.corp.cableone.net"
   MODEM_SQL_PORT: "1433"

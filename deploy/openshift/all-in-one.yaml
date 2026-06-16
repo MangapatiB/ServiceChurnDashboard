@@ -6,11 +6,10 @@ metadata:
 type: Opaque
 stringData:
   SECRET_KEY: "change-me"
-  DATABRICKS_TOKEN: "replace-with-databricks-token"
   DASHBOARD_SQL_USERNAME: "replace-with-dashboard-sql-username"
   DASHBOARD_SQL_PASSWORD: "replace-with-dashboard-sql-password"
-  MODEM_SQL_USERNAME: "replace-with-sql-username"
-  MODEM_SQL_PASSWORD: "replace-with-sql-password"
+  MODEM_SQL_USERNAME: "replace-with-modem-sql-username"
+  MODEM_SQL_PASSWORD: "replace-with-modem-sql-password"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -39,10 +38,6 @@ data:
   DASHBOARD_SQL_CALL_RECORDS_TABLE: "service_churn_call_records_monthly"
   DASHBOARD_SQL_ACCOUNT_MAC_TABLE: "service_churn_account_mac_map"
   DASHBOARD_SQL_MODEM_HEALTH_TABLE: "service_churn_modem_health_latest"
-
-  DATABRICKS_HOST: "https://adb-2499533172944623.3.azuredatabricks.net"
-  DATABRICKS_WAREHOUSE_ID: "926835bd268bdeb0"
-  DATABRICKS_SQL_QUERY_FILE: "/app/queries/service_churn_dashboard.sql"
 
   MODEM_HEALTH_REFRESH_SECONDS: "3600"
   MODEM_SQL_SERVER: "sql-productdbu.uat.corp.cableone.net"
