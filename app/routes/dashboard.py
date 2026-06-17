@@ -15,6 +15,11 @@ def _get_dashboard_service() -> DashboardDataService:
     return service
 
 
+@dashboard_bp.get("/healthz")
+def health_check():
+    return jsonify({"status": "ok"}), 200
+
+
 @dashboard_bp.get("/")
 def dashboard_home():
     service = _get_dashboard_service()

@@ -1,0 +1,26 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: service-churn-dashboard
+  namespace: service-churn-dev
+spec:
+  source:
+    git:
+      uri: https://github.com/MangapatiB/ServiceChurnDashboard.git
+      ref: main
+    type: Git
+  strategy:
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+    type: Docker
+  output:
+    to:
+      kind: ImageStreamTag
+      name: service-churn-dashboard:latest
+  triggers:
+    - type: ConfigChange
+    - type: GitHub
+      github:
+        secret: github-webhook-secret
+  successfulBuildsHistoryLimit: 3
+  failedBuildsHistoryLimit: 3

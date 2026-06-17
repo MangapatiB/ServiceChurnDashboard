@@ -12,6 +12,19 @@ stringData:
   MODEM_SQL_PASSWORD: "replace-with-modem-sql-password"
 ---
 apiVersion: v1
+kind: Secret
+metadata:
+  name: service-churn-dashboard-scheduler-secret
+  namespace: service-churn-dev
+type: Opaque
+stringData:
+  DATABRICKS_TOKEN: "replace-with-databricks-token"
+  TARGET_SQL_USERNAME: "replace-with-target-sql-username"
+  TARGET_SQL_PASSWORD: "replace-with-target-sql-password"
+  SOURCE_SQL_USERNAME: "replace-with-source-sql-username"
+  SOURCE_SQL_PASSWORD: "replace-with-source-sql-password"
+---
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: service-churn-dashboard-config
@@ -53,6 +66,36 @@ data:
   LOG_DIR: "/tmp/logs"
   LOG_LEVEL: "INFO"
   LOG_BACKUP_COUNT: "14"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-churn-dashboard-scheduler-config
+  namespace: service-churn-dev
+data:
+  DATABRICKS_HOST: "https://adb-2499533172944623.3.azuredatabricks.net"
+  DATABRICKS_WAREHOUSE_ID: "926835bd268bdeb0"
+
+  TARGET_SQL_SERVER: "sql-uatproduct.uat.corp.cableone.net"
+  TARGET_SQL_DATABASE: "ServiceChurnDashboard"
+  TARGET_SQL_DRIVER: "ODBC Driver 18 for SQL Server"
+  TARGET_SQL_ENCRYPT: "yes"
+  TARGET_SQL_TRUST_SERVER_CERTIFICATE: "yes"
+
+  SOURCE_SQL_SERVER: "sql-productdbu.uat.corp.cableone.net"
+  SOURCE_SQL_DATABASE: "newbacondata"
+  SOURCE_SQL_DRIVER: "ODBC Driver 18 for SQL Server"
+  SOURCE_SQL_ENCRYPT: "no"
+  SOURCE_SQL_TRUST_SERVER_CERTIFICATE: "yes"
+
+  DBX_HTTP_MAX_CONCURRENT_REQUESTS: "6"
+  RES_CHURN_INSERT_CHUNK_SIZE: "1000"
+  COM_CHURN_INSERT_CHUNK_SIZE: "1000"
+  CALL_TABLE_INSERT_CHUNK_SIZE: "1000"
+  CHURN_STAGE_WORKERS: "8"
+  CALL_TABLE_STAGE_WORKERS: "8"
+  TOP_LEVEL_DATA_FETCH_WORKERS: "8"
+  RESUME_PARTIAL_RUNS: "false"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -162,9 +205,9 @@ spec:
                   done
               envFrom:
                 - configMapRef:
-                    name: service-churn-dashboard-config
+                    name: service-churn-dashboard-scheduler-config
                 - secretRef:
-                    name: service-churn-dashboard-secret
+                    name: service-churn-dashboard-scheduler-secret
               resources:
                 requests:
                   cpu: 100m

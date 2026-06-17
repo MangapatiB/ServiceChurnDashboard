@@ -30,9 +30,9 @@ spec:
                   done
               envFrom:
                 - configMapRef:
-                    name: service-churn-dashboard-config
+                    name: service-churn-dashboard-scheduler-config
                 - secretRef:
-                    name: service-churn-dashboard-secret
+                    name: service-churn-dashboard-scheduler-secret
               resources:
                 requests:
                   cpu: 100m

@@ -1,0 +1,8 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: service-churn-dashboard
+  namespace: service-churn-dev
+spec:
+  lookupPolicy:
+    local: true
