@@ -46,7 +46,10 @@ def build_state_file_path(base_name):
 
 SQL_INSERT_CHUNK_SIZE = 500
 MODEM_SOURCE_FETCH_BATCH_SIZE = 5000
-MODEM_INSERT_CHUNK_SIZE = 200
+MODEM_INSERT_CHUNK_SIZE = int(os.getenv("MODEM_INSERT_CHUNK_SIZE", "1000"))
+MODEM_INSERT_COMMIT_EVERY_CHUNKS = int(os.getenv("MODEM_INSERT_COMMIT_EVERY_CHUNKS", "10"))
+MODEM_PROGRESS_LOG_EVERY = int(os.getenv("MODEM_PROGRESS_LOG_EVERY", "5000"))
+MODEM_STAGE_WORKERS = int(os.getenv("MODEM_STAGE_WORKERS", "4"))
 DBX_HTTP_MAX_ATTEMPTS = 4
 DBX_HTTP_RETRY_DELAY_SECONDS = 3
 DBX_HTTP_RETRY_MAX_DELAY_SECONDS = 30
@@ -731,6 +734,63 @@ def cleanup_parallel_stage_tables(stage_table_handles):
             worker_connection.close()
 
 
+def load_parallel_modem_rows_to_stage_tables(target_table, rows):
+    if not rows:
+        return [], 0
+
+    insert_columns = [
+        "ModemMac", "IP", "LastSeen", "USINT", "Status", "State", "USRXLVL", "USTXPWR", "USRXSNR",
+        "DSRXLVL", "DSRXSNR", "DSPREFEC", "DSPOSTFEC", "DSBW", "USBW", "FiberNode", "CMTS", "RefreshedAt",
+    ]
+    worker_partitions = partition_rows_evenly(rows, min(MODEM_STAGE_WORKERS, len(rows)))
+    insert_sql_template = build_insert_sql("{stage_table}", insert_columns).replace(
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSUTCDATETIME())",
+    )
+
+    logger.info(
+        "Loading %s modem health rows across workers=%s",
+        len(rows),
+        len(worker_partitions),
+    )
+
+    stage_table_handles = []
+    total_rows = 0
+    try:
+        with ThreadPoolExecutor(max_workers=len(worker_partitions)) as executor:
+            future_to_worker = {
+                executor.submit(
+                    load_row_partition_to_stage,
+                    target_table,
+                    insert_columns,
+                    insert_sql_template,
+                    row_partition,
+                    "modem health",
+                    MODEM_INSERT_CHUNK_SIZE,
+                    MODEM_INSERT_COMMIT_EVERY_CHUNKS,
+                    MODEM_PROGRESS_LOG_EVERY,
+                    worker_index,
+                ): worker_index
+                for worker_index, row_partition in enumerate(worker_partitions, start=1)
+            }
+            for future in as_completed(future_to_worker):
+                worker_index = future_to_worker[future]
+                stage_table, row_count, worker_connection, worker_cursor = future.result()
+                stage_table_handles.append((stage_table, worker_connection, worker_cursor))
+                total_rows += row_count
+                logger.info(
+                    "modem health worker=%s stage=%s loaded_rows=%s",
+                    worker_index,
+                    stage_table,
+                    row_count,
+                )
+    except Exception:
+        cleanup_parallel_stage_tables(stage_table_handles)
+        raise
+
+    return stage_table_handles, total_rows
+
+
 def load_churn_offset_partition_to_stage(
     target_table,
     insert_columns,
@@ -1315,6 +1375,33 @@ def replace_table_from_stage(connection, cursor, target_table, stage_table):
     try:
         cursor.execute(f"TRUNCATE TABLE {target_table}")
         cursor.execute(f"INSERT INTO {target_table} SELECT * FROM {stage_table}")
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+
+
+def replace_table_from_stage_tables(connection, cursor, target_table, stage_tables):
+    if not stage_tables:
+        return
+    if len(stage_tables) == 1:
+        replace_table_from_stage(connection, cursor, target_table, stage_tables[0])
+        return
+
+    stage_union_query = "\nUNION ALL\n".join(
+        [f"SELECT * FROM {stage_table}" for stage_table in stage_tables]
+    )
+    try:
+        cursor.execute(f"TRUNCATE TABLE {target_table}")
+        cursor.execute(
+            f"""
+            INSERT INTO {target_table}
+            SELECT *
+            FROM (
+                {stage_union_query}
+            ) AS stage
+            """
+        )
         connection.commit()
     except Exception:
         connection.rollback()
@@ -2180,33 +2267,68 @@ def refresh_once():
                 create_stage_table(target_cursor, "dbo.service_churn_modem_health_latest", modem_stage)
                 if share_modem_server:
                     logger.info("Loading modem health with SQL-side insert-select")
+                    modem_stage_load_started = time.perf_counter()
                     load_modem_stage_from_sql_server(target_cursor, modem_stage)
                     target.commit()
                     modem_total_rows = get_table_row_count(target_cursor, modem_stage)
+                    log_phase_duration("modem health stage load", modem_stage_load_started, modem_total_rows)
                 else:
-                    modem_insert_sql = build_insert_sql(
-                        modem_stage,
-                        [
-                            "ModemMac", "IP", "LastSeen", "USINT", "Status", "State", "USRXLVL", "USTXPWR", "USRXSNR",
-                            "DSRXLVL", "DSRXSNR", "DSPREFEC", "DSPOSTFEC", "DSBW", "USBW", "FiberNode", "CMTS", "RefreshedAt",
-                        ],
-                    ).replace(
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSUTCDATETIME())",
-                    )
                     modem_fetch_wait_started = time.perf_counter()
                     normalized_modem_rows = modem_fetch_future.result()
                     modem_total_rows = len(normalized_modem_rows)
                     log_phase_duration("modem health fetch wait", modem_fetch_wait_started, modem_total_rows)
-                    append_rows_with_mode(
-                        target_cursor,
-                        modem_insert_sql,
-                        normalized_modem_rows,
-                        use_fast_executemany=False,
-                        chunk_size=MODEM_INSERT_CHUNK_SIZE,
-                        commit_connection=target,
-                    )
-                replace_table_from_stage(target, target_cursor, "dbo.service_churn_modem_health_latest", modem_stage)
+                    modem_stage_insert_started = time.perf_counter()
+                    modem_stage_handles = []
+                    try:
+                        modem_stage_handles, modem_total_rows = load_parallel_modem_rows_to_stage_tables(
+                            "dbo.service_churn_modem_health_latest",
+                            normalized_modem_rows,
+                        )
+                        modem_stage_tables = [stage_table for stage_table, _, _ in modem_stage_handles]
+                    except pyodbc.Error as exc:
+                        cleanup_parallel_stage_tables(modem_stage_handles)
+                        modem_stage_handles = []
+                        logger.warning(
+                            "Parallel modem stage load failed: %s; falling back to single-stage insert",
+                            exc,
+                        )
+                        modem_insert_sql = build_insert_sql(
+                            modem_stage,
+                            [
+                                "ModemMac", "IP", "LastSeen", "USINT", "Status", "State", "USRXLVL", "USTXPWR", "USRXSNR",
+                                "DSRXLVL", "DSRXSNR", "DSPREFEC", "DSPOSTFEC", "DSBW", "USBW", "FiberNode", "CMTS", "RefreshedAt",
+                            ],
+                        ).replace(
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSUTCDATETIME())",
+                        )
+                        append_rows_with_mode(
+                            target_cursor,
+                            modem_insert_sql,
+                            normalized_modem_rows,
+                            use_fast_executemany=False,
+                            chunk_size=MODEM_INSERT_CHUNK_SIZE,
+                            commit_connection=target,
+                            commit_every_chunks=MODEM_INSERT_COMMIT_EVERY_CHUNKS,
+                            progress_label="modem health",
+                            progress_log_every=MODEM_PROGRESS_LOG_EVERY,
+                        )
+                        modem_stage_tables = [modem_stage]
+                    log_phase_duration("modem health stage insert", modem_stage_insert_started, modem_total_rows)
+                modem_replace_started = time.perf_counter()
+                if share_modem_server:
+                    replace_table_from_stage(target, target_cursor, "dbo.service_churn_modem_health_latest", modem_stage)
+                else:
+                    try:
+                        replace_table_from_stage_tables(
+                            target,
+                            target_cursor,
+                            "dbo.service_churn_modem_health_latest",
+                            modem_stage_tables,
+                        )
+                    finally:
+                        cleanup_parallel_stage_tables(modem_stage_handles)
+                log_phase_duration("modem health target replace", modem_replace_started, modem_total_rows)
                 stamp_table_refreshed_at(target, target_cursor, "dbo.service_churn_modem_health_latest")
                 log_table_refresh("dbo.service_churn_modem_health_latest", modem_total_rows)
                 mark_table_completed(checkpoint_state, "dbo.service_churn_modem_health_latest")
