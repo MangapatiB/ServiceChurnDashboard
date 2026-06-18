@@ -199,9 +199,9 @@ spec:
                 - |
                   set -e
                   cd /app/schedular
-                  for file in run_*.py; do
+                  for file in run_commercial_churn.py run_residential_churn.py run_account_mac.py run_modem_health.py run_truckroll.py run_call_records_monthly.py run_call_monthly_agg.py; do
                     echo "Running $file"
-                    python "$file"
+                    python3 "$file"
                   done
               envFrom:
                 - configMapRef:

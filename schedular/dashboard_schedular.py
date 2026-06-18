@@ -1850,6 +1850,34 @@ def log_table_refresh(table_name, row_count):
     logger.info("Loaded %s rows into %s", row_count, table_name)
 
 
+def stamp_table_refreshed_at(connection, cursor, table_name):
+    """Stamp all rows with the latest refresh timestamp after table sync completes."""
+    cursor.execute(
+        """
+        SELECT
+            CASE
+                WHEN COL_LENGTH(?, 'Refreshed At') IS NOT NULL THEN 1
+                WHEN COL_LENGTH(?, 'RefreshedAt') IS NOT NULL THEN 2
+                ELSE 0
+            END
+        """,
+        table_name,
+        table_name,
+    )
+    column_selector = int(cursor.fetchone()[0])
+
+    if column_selector == 1:
+        cursor.execute(f"UPDATE {table_name} SET [Refreshed At] = SYSUTCDATETIME()")
+        connection.commit()
+        logger.info("Updated refresh timestamp column=[Refreshed At] table=%s rows=%s", table_name, cursor.rowcount)
+    elif column_selector == 2:
+        cursor.execute(f"UPDATE {table_name} SET RefreshedAt = SYSUTCDATETIME()")
+        connection.commit()
+        logger.info("Updated refresh timestamp column=RefreshedAt table=%s rows=%s", table_name, cursor.rowcount)
+    else:
+        logger.warning("Skipped refresh timestamp update; no refresh timestamp column found table=%s", table_name)
+
+
 def log_databricks_source_mode(table_name, prepared_source_name):
     if prepared_source_name:
         logger.info(
@@ -2108,6 +2136,7 @@ def refresh_once():
                     commit_connection=target,
                 )
                 replace_table_from_stage(target, target_cursor, "dbo.service_churn_truckroll_base", truckroll_stage)
+                stamp_table_refreshed_at(target, target_cursor, "dbo.service_churn_truckroll_base")
                 log_table_refresh("dbo.service_churn_truckroll_base", len(truckroll_rows))
                 mark_table_completed(checkpoint_state, "dbo.service_churn_truckroll_base")
                 if truckroll_source_fingerprint is not None:
@@ -2136,6 +2165,7 @@ def refresh_once():
                     commit_connection=target,
                 )
                 replace_table_from_stage(target, target_cursor, "dbo.service_churn_account_mac_map", account_mac_stage)
+                stamp_table_refreshed_at(target, target_cursor, "dbo.service_churn_account_mac_map")
                 log_table_refresh("dbo.service_churn_account_mac_map", len(account_mac_rows))
                 mark_table_completed(checkpoint_state, "dbo.service_churn_account_mac_map")
                 if account_mac_source_fingerprint is not None:
@@ -2177,6 +2207,7 @@ def refresh_once():
                         commit_connection=target,
                     )
                 replace_table_from_stage(target, target_cursor, "dbo.service_churn_modem_health_latest", modem_stage)
+                stamp_table_refreshed_at(target, target_cursor, "dbo.service_churn_modem_health_latest")
                 log_table_refresh("dbo.service_churn_modem_health_latest", modem_total_rows)
                 mark_table_completed(checkpoint_state, "dbo.service_churn_modem_health_latest")
                 if modem_source_fingerprint is not None:
@@ -2275,6 +2306,7 @@ def refresh_once():
                     res_insert_seconds,
                     res_replace_seconds,
                 )
+                stamp_table_refreshed_at(target, target_cursor, "dbo.service_churn_res_latest")
                 log_table_refresh("dbo.service_churn_res_latest", res_total_rows)
                 mark_table_completed(checkpoint_state, "dbo.service_churn_res_latest")
                 if res_source_fingerprint is not None:
@@ -2373,6 +2405,7 @@ def refresh_once():
                     com_insert_seconds,
                     com_replace_seconds,
                 )
+                stamp_table_refreshed_at(target, target_cursor, "dbo.service_churn_com_latest")
                 log_table_refresh("dbo.service_churn_com_latest", com_total_rows)
                 mark_table_completed(checkpoint_state, "dbo.service_churn_com_latest")
                 if com_source_fingerprint is not None:
@@ -2465,6 +2498,7 @@ def refresh_once():
                     call_monthly_sync_counts["updated_rows"],
                     call_monthly_sync_counts["inserted_rows"],
                 )
+                stamp_table_refreshed_at(target, target_cursor, "dbo.service_churn_call_monthly_agg")
                 log_table_refresh("dbo.service_churn_call_monthly_agg", len(normalized_call_monthly_rows))
                 mark_table_completed(checkpoint_state, "dbo.service_churn_call_monthly_agg")
                 if call_monthly_source_fingerprint is not None:
@@ -2519,6 +2553,7 @@ def refresh_once():
                     call_records_sync_counts["updated_rows"],
                     call_records_sync_counts["inserted_rows"],
                 )
+                stamp_table_refreshed_at(target, target_cursor, "dbo.service_churn_call_records_monthly")
                 log_table_refresh("dbo.service_churn_call_records_monthly", len(normalized_call_records_rows))
                 mark_table_completed(checkpoint_state, "dbo.service_churn_call_records_monthly")
                 if call_records_source_fingerprint is not None:
