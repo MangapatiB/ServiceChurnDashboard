@@ -17,7 +17,8 @@
             dataMode: {{ data_mode|tojson }},
             currentLocation: {{ current_location|tojson }},
             currentLimit: {{ current_limit|tojson }},
-            currentSegment: {{ current_segment|tojson }}
+            currentSegment: {{ current_segment|tojson }},
+            maxDashboardLimit: {{ max_dashboard_limit|tojson }}
         };
     </script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>

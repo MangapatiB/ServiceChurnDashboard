@@ -1,4 +1,5 @@
 from collections import Counter, defaultdict
+from contextlib import nullcontext
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
 import logging
@@ -23,11 +24,15 @@ class DashboardDataService:
         self.client = DashboardSqlClient(config)
         self.middleware_cache = MiddlewareDataCache(config)
 
+    def open_query_session(self):
+        return self.client.open_session()
+
     def get_dashboard_snapshot(
         self,
         location: str = "",
         limit: int | None = None,
         customer_segment: str = "res",
+        query_session=None,
     ) -> dict[str, Any]:
         mode = self.config.get("DATA_SOURCE_MODE", "mock")
         safe_limit = normalize_limit(limit, default=self.config.get("HIGH_RISK_LIMIT", 12))
@@ -52,25 +57,32 @@ class DashboardDataService:
             return snapshot
 
         try:
-            truckroll_rows = self.client.fetch_truckroll_rows(safe_location, safe_limit)
-            subscriber_account_numbers = [row[1] for row in truckroll_rows if len(row) > 1]
-            churn_rows = self.client.fetch_churn_rows(subscriber_account_numbers, safe_segment)
-            displayed_account_numbers = self._select_displayed_account_numbers(truckroll_rows, churn_rows, safe_limit)
-            displayed_subscriber_accounts = self._select_displayed_subscriber_account_numbers(
-                truckroll_rows,
-                churn_rows,
-                safe_limit,
-            )
-            call_rows, call_scope = self._load_call_rows(displayed_subscriber_accounts, safe_segment)
-            return self._build_live_snapshot(
-                truckroll_rows,
-                churn_rows,
-                call_rows,
-                safe_location,
-                safe_limit,
-                call_scope,
-                safe_segment,
-            )
+            session_context = self.client.open_session() if query_session is None else nullcontext(query_session)
+            with session_context as session:
+                truckroll_rows = self.client.fetch_truckroll_rows(safe_location, safe_limit, query_session=session)
+                subscriber_account_numbers = [row[1] for row in truckroll_rows if len(row) > 1]
+                churn_rows = self.client.fetch_churn_rows(subscriber_account_numbers, safe_segment, query_session=session)
+                displayed_account_numbers = self._select_displayed_account_numbers(truckroll_rows, churn_rows, safe_limit)
+                displayed_subscriber_accounts = self._select_displayed_subscriber_account_numbers(
+                    truckroll_rows,
+                    churn_rows,
+                    safe_limit,
+                )
+                call_rows, call_scope = self._load_call_rows(
+                    displayed_subscriber_accounts,
+                    safe_segment,
+                    query_session=session,
+                )
+                return self._build_live_snapshot(
+                    truckroll_rows,
+                    churn_rows,
+                    call_rows,
+                    safe_location,
+                    safe_limit,
+                    call_scope,
+                    safe_segment,
+                    query_session=session,
+                )
         except Exception as exc:  # noqa: BLE001
             logger.exception(
                 "Failed to build live dashboard snapshot. Falling back to mock data. location=%s limit=%s segment=%s",
@@ -88,13 +100,13 @@ class DashboardDataService:
             snapshot["high_risk_customers"] = snapshot["high_risk_customers"][:safe_limit]
             return snapshot
 
-    def get_location_options(self) -> list[str]:
+    def get_location_options(self, query_session=None) -> list[str]:
         mode = self.config.get("DATA_SOURCE_MODE", "mock")
         if mode != "live":
             return get_mock_locations()
 
         try:
-            locations = sorted(self.client.fetch_location_options())
+            locations = sorted(self.client.fetch_location_options(query_session=query_session))
             return locations or get_mock_locations()
         except Exception:  # noqa: BLE001
             logger.exception("Failed to load live location options. Falling back to mock locations.")
@@ -104,8 +116,13 @@ class DashboardDataService:
         self,
         displayed_subscriber_account_numbers: list[str],
         customer_segment: str,
+        query_session=None,
     ) -> tuple[list[Any], str]:
-        account_scoped_rows = self.client.fetch_call_monthly_rows(displayed_subscriber_account_numbers, customer_segment)
+        account_scoped_rows = self.client.fetch_call_monthly_rows(
+            displayed_subscriber_account_numbers,
+            customer_segment,
+            query_session=query_session,
+        )
         return account_scoped_rows, "watchlist"
 
     def get_call_data_records(
@@ -113,6 +130,7 @@ class DashboardDataService:
         location: str = "",
         limit: int | None = None,
         customer_segment: str = "res",
+        query_session=None,
     ) -> dict[str, Any]:
         mode = self.config.get("DATA_SOURCE_MODE", "mock")
         safe_limit = normalize_limit(limit, default=self.config.get("HIGH_RISK_LIMIT", 12))
@@ -133,11 +151,17 @@ class DashboardDataService:
             }
 
         try:
-            truckroll_rows = self.client.fetch_truckroll_rows(safe_location, safe_limit)
-            subscriber_account_numbers = [row[1] for row in truckroll_rows if len(row) > 1]
-            churn_rows = self.client.fetch_churn_rows(subscriber_account_numbers, safe_segment)
-            displayed_account_numbers = self._select_displayed_account_numbers(truckroll_rows, churn_rows, safe_limit)
-            call_record_rows = self.client.fetch_call_record_rows(displayed_account_numbers, safe_segment)
+            session_context = self.client.open_session() if query_session is None else nullcontext(query_session)
+            with session_context as session:
+                truckroll_rows = self.client.fetch_truckroll_rows(safe_location, safe_limit, query_session=session)
+                subscriber_account_numbers = [row[1] for row in truckroll_rows if len(row) > 1]
+                churn_rows = self.client.fetch_churn_rows(subscriber_account_numbers, safe_segment, query_session=session)
+                displayed_account_numbers = self._select_displayed_account_numbers(truckroll_rows, churn_rows, safe_limit)
+                call_record_rows = self.client.fetch_call_record_rows(
+                    displayed_account_numbers,
+                    safe_segment,
+                    query_session=session,
+                )
             return {
                 "meta": {
                     "source": "live",
@@ -177,6 +201,7 @@ class DashboardDataService:
         limit: int,
         call_scope: str = "watchlist",
         customer_segment: str = "res",
+        query_session=None,
     ) -> dict[str, Any]:
         if not truckroll_rows:
             snapshot = build_mock_snapshot()
@@ -210,6 +235,7 @@ class DashboardDataService:
             churn_record = self._coerce_churn_row(record)
             if churn_record["customer_id"]:
                 churn_by_account[churn_record["customer_id"]] = churn_record
+        call_rollups = self._build_call_account_rollups(call_rows)
         customers = []
         signal_counter: Counter[str] = Counter()
         markets: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -250,14 +276,23 @@ class DashboardDataService:
                 "modem_usbw": "",
                 "fiber_node": "",
                 "cmts": "",
+                "calls_6m": 0,
+                "calls_12m": 0,
+                "repeat_calls_12m": False,
+                "triple_calls_12m": False,
                 "modem_health": {},
             }
+            call_rollup = call_rollups.get(truckroll_record["customer_id"], {})
+            customer["calls_6m"] = int(call_rollup.get("calls_6m", 0))
+            customer["calls_12m"] = int(call_rollup.get("calls_12m", 0))
+            customer["repeat_calls_12m"] = customer["calls_12m"] >= 2
+            customer["triple_calls_12m"] = customer["calls_12m"] >= 3
             customers.append(customer)
             markets[truckroll_record["geo"]].append({**customer, "features": features})
 
         customers.sort(key=lambda item: item["risk_score"], reverse=True)
         customers = customers[:limit]
-        modem_metrics = self._enrich_customers_with_modem_health(customers)
+        modem_metrics = self._enrich_customers_with_modem_health(customers, query_session=query_session)
 
         high_risk_count = sum(1 for item in customers if item["risk_score"] >= 90)
         avg_risk = round(sum(item["risk_score"] for item in customers) / len(customers)) if customers else 0
@@ -287,7 +322,7 @@ class DashboardDataService:
         snapshot["playbooks"] = self._build_playbooks(high_risk_count, len(customers))
         return snapshot
 
-    def _enrich_customers_with_modem_health(self, customers: list[dict[str, Any]]) -> dict[str, Any]:
+    def _enrich_customers_with_modem_health(self, customers: list[dict[str, Any]], query_session=None) -> dict[str, Any]:
         account_numbers = []
         for customer in customers:
             account_numbers.extend(
@@ -300,7 +335,10 @@ class DashboardDataService:
             return {"telemetry_accounts": 0, "latest_seen": ""}
 
         try:
-            modem_health_by_account = self.middleware_cache.get_modem_health_by_account(account_numbers)
+            modem_health_by_account = self.middleware_cache.get_modem_health_by_account(
+                account_numbers,
+                query_session=query_session,
+            )
         except Exception:  # noqa: BLE001
             logger.exception("Failed to load modem health data. Continuing without modem enrichment.")
             return {"telemetry_accounts": 0, "latest_seen": ""}
@@ -566,9 +604,9 @@ class DashboardDataService:
                 continue
         return None
 
-    def _build_call_history(self, call_rows: list[Any], call_scope: str = "watchlist") -> dict[str, Any]:
+    def _build_call_account_rollups(self, call_rows: list[Any]) -> dict[str, dict[str, float]]:
         if not call_rows:
-            return {"summary": [], "segments": [], "scope": call_scope}
+            return {}
 
         raw_call_rows = []
         for row in call_rows:
@@ -578,7 +616,7 @@ class DashboardDataService:
             raw_call_rows.append(call_record)
 
         if not raw_call_rows:
-            return {"summary": [], "segments": [], "scope": call_scope}
+            return {}
 
         latest_month = max(row["month_start"] for row in raw_call_rows if row["month_start"] is not None)
         account_rollups: dict[str, dict[str, float]] = {}
@@ -607,6 +645,11 @@ class DashboardDataService:
             if months_difference <= 11:
                 rollup["calls_12m"] += row["number_of_calls"]
                 rollup["duration_12m"] += row["total_contact_duration_minutes"]
+
+        return account_rollups
+
+    def _build_call_history(self, call_rows: list[Any], call_scope: str = "watchlist") -> dict[str, Any]:
+        account_rollups = self._build_call_account_rollups(call_rows)
 
         if not account_rollups:
             return {"summary": [], "segments": [], "scope": call_scope}
@@ -684,12 +727,20 @@ class DashboardDataService:
         return "Monitor"
 
     @staticmethod
-    def _risk_tier(avg_risk: int) -> str:
-        if avg_risk >= 85:
+    def _risk_tier(heuristic_score: int) -> str:
+        if heuristic_score >= 75:
             return "Tier 1"
-        if avg_risk >= 70:
+        if heuristic_score >= 50:
             return "Tier 2"
         return "Tier 3"
+
+    @staticmethod
+    def _geo_recommended_action(risk_tier: str) -> str:
+        if risk_tier == "Tier 1":
+            return "Immediate retention and operations response"
+        if risk_tier == "Tier 2":
+            return "Prioritize proactive outreach and service follow-up"
+        return "Monitor trend and prepare targeted campaign"
 
     @staticmethod
     def _build_signal_mix(signal_counter: Counter[str]) -> list[dict[str, Any]]:
@@ -704,19 +755,41 @@ class DashboardDataService:
 
     def _build_geo_summary(self, markets: defaultdict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
         geo_summary = []
+        max_flagged_accounts = max((len(entries) for entries in markets.values()), default=0)
         for geo, entries in sorted(markets.items(), key=lambda item: len(item[1]), reverse=True):
             avg_risk = round(sum(entry["risk_score"] for entry in entries) / len(entries)) if entries else 0
             feature_counter = Counter(feature for entry in entries for feature in entry.get("features", []) if feature)
+            flagged_accounts = len(entries)
+            high_risk_count = sum(1 for entry in entries if entry["risk_score"] >= 90)
+            repeat_call_accounts = sum(1 for entry in entries if entry.get("repeat_calls_12m"))
+            triple_call_accounts = sum(1 for entry in entries if entry.get("triple_calls_12m"))
+            high_risk_rate = round((high_risk_count / flagged_accounts) * 100) if flagged_accounts else 0
+            repeat_call_rate = round((repeat_call_accounts / flagged_accounts) * 100) if flagged_accounts else 0
+            triple_call_rate = round((triple_call_accounts / flagged_accounts) * 100) if flagged_accounts else 0
+            truckroll_pressure = round((flagged_accounts / max_flagged_accounts) * 100) if max_flagged_accounts else 0
+            heuristic_score = round(
+                (avg_risk * 0.5)
+                + (high_risk_rate * 0.25)
+                + (repeat_call_rate * 0.15)
+                + (triple_call_rate * 0.05)
+                + (truckroll_pressure * 0.05)
+            )
+            risk_tier = self._risk_tier(heuristic_score)
             geo_summary.append(
                 {
                     "geo": geo,
-                    "flagged_accounts": len(entries),
+                    "flagged_accounts": flagged_accounts,
                     "avg_risk": avg_risk,
-                    "high_risk_count": sum(1 for entry in entries if entry["risk_score"] >= 90),
+                    "high_risk_count": high_risk_count,
                     "contactable_count": sum(1 for entry in entries if entry["phone_number"]),
                     "top_driver": feature_counter.most_common(1)[0][0] if feature_counter else "Truck roll flagged",
-                    "risk_tier": self._risk_tier(avg_risk),
-                    "recommended_action": self._recommend_action(avg_risk),
+                    "risk_tier": risk_tier,
+                    "recommended_action": self._geo_recommended_action(risk_tier),
+                    "heuristic_score": heuristic_score,
+                    "high_risk_rate": high_risk_rate,
+                    "repeat_call_rate": repeat_call_rate,
+                    "triple_call_rate": triple_call_rate,
+                    "truckroll_pressure": truckroll_pressure,
                 }
             )
         return geo_summary

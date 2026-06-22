@@ -30,8 +30,14 @@ def dashboard_home():
         maximum=current_app.config["MAX_DASHBOARD_LIMIT"],
     )
     customer_segment = normalize_customer_segment(request.args.get("segment"))
-    snapshot = service.get_dashboard_snapshot(location=location, limit=limit, customer_segment=customer_segment)
-    location_options = service.get_location_options()
+    with service.open_query_session() as query_session:
+        snapshot = service.get_dashboard_snapshot(
+            location=location,
+            limit=limit,
+            customer_segment=customer_segment,
+            query_session=query_session,
+        )
+        location_options = service.get_location_options(query_session=query_session)
     return render_template(
         "index.html",
         initial_snapshot=snapshot,
@@ -55,8 +61,14 @@ def operations_view():
         maximum=current_app.config["MAX_DASHBOARD_LIMIT"],
     )
     customer_segment = normalize_customer_segment(request.args.get("segment"))
-    snapshot = service.get_dashboard_snapshot(location=location, limit=limit, customer_segment=customer_segment)
-    location_options = service.get_location_options()
+    with service.open_query_session() as query_session:
+        snapshot = service.get_dashboard_snapshot(
+            location=location,
+            limit=limit,
+            customer_segment=customer_segment,
+            query_session=query_session,
+        )
+        location_options = service.get_location_options(query_session=query_session)
     return render_template(
         "operations.html",
         initial_snapshot=snapshot,
@@ -80,8 +92,14 @@ def call_data_view():
         maximum=current_app.config["MAX_DASHBOARD_LIMIT"],
     )
     customer_segment = normalize_customer_segment(request.args.get("segment"))
-    call_data = service.get_call_data_records(location=location, limit=limit, customer_segment=customer_segment)
-    location_options = service.get_location_options()
+    with service.open_query_session() as query_session:
+        call_data = service.get_call_data_records(
+            location=location,
+            limit=limit,
+            customer_segment=customer_segment,
+            query_session=query_session,
+        )
+        location_options = service.get_location_options(query_session=query_session)
     return render_template(
         "call_data.html",
         initial_snapshot=None,

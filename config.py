@@ -12,7 +12,7 @@ class Config:
     DATA_SOURCE_MODE = os.getenv("DATA_SOURCE_MODE", "mock")
     REFRESH_SECONDS = int(os.getenv("REFRESH_SECONDS", "60"))
     HIGH_RISK_LIMIT = int(os.getenv("HIGH_RISK_LIMIT", "12"))
-    MAX_DASHBOARD_LIMIT = int(os.getenv("MAX_DASHBOARD_LIMIT", "1000"))
+    MAX_DASHBOARD_LIMIT = int(os.getenv("MAX_DASHBOARD_LIMIT", "10000"))
     LOG_DIR = os.getenv("LOG_DIR", str(Path(__file__).resolve().parent / "logs"))
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     LOG_BACKUP_COUNT = int(os.getenv("LOG_BACKUP_COUNT", "14"))

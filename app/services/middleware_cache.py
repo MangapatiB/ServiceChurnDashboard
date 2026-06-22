@@ -3,7 +3,7 @@ import logging
 from threading import RLock
 from typing import Any
 
-from app.services.dashboard_sql_client import DashboardSqlClient
+from app.services.dashboard_sql_client import DashboardSqlClient, DashboardSqlQuerySession
 from app.services.sql_server_client import SqlServerClient
 
 
@@ -20,7 +20,11 @@ class MiddlewareDataCache:
         self._modem_health_cache: dict[str, dict[str, Any]] = {}
         self._modem_health_refreshed_at: dict[str, datetime] = {}
 
-    def get_modem_health_by_account(self, account_numbers: list[str]) -> dict[str, dict[str, Any]]:
+    def get_modem_health_by_account(
+        self,
+        account_numbers: list[str],
+        query_session: DashboardSqlQuerySession | None = None,
+    ) -> dict[str, dict[str, Any]]:
         sanitized_accounts = []
         seen_accounts = set()
         for account_number in account_numbers:
@@ -33,7 +37,7 @@ class MiddlewareDataCache:
         if not sanitized_accounts:
             return {}
 
-        account_mac_map = self._get_account_mac_map(sanitized_accounts)
+        account_mac_map = self._get_account_mac_map(sanitized_accounts, query_session=query_session)
         account_to_mac: dict[str, str] = {}
         for account_number in sanitized_accounts:
             modem_mac = self._normalize_mac_key(account_mac_map.get(account_number))
@@ -43,14 +47,18 @@ class MiddlewareDataCache:
         if not account_to_mac:
             return {}
 
-        modem_health_by_mac = self._get_modem_health_rows(list(account_to_mac.values()))
+        modem_health_by_mac = self._get_modem_health_rows(list(account_to_mac.values()), query_session=query_session)
         return {
             account_number: modem_health_by_mac[modem_mac]
             for account_number, modem_mac in account_to_mac.items()
             if modem_mac in modem_health_by_mac
         }
 
-    def _get_account_mac_map(self, account_numbers: list[str]) -> dict[str, str]:
+    def _get_account_mac_map(
+        self,
+        account_numbers: list[str],
+        query_session: DashboardSqlQuerySession | None = None,
+    ) -> dict[str, str]:
         with self._lock:
             if not account_numbers:
                 return {}
@@ -75,7 +83,10 @@ class MiddlewareDataCache:
                 }
 
             refresh_accounts = missing_accounts if cache_is_fresh else account_numbers
-            refreshed_cache = self.dashboard_sql_client.fetch_account_mac_map(refresh_accounts)
+            refreshed_cache = self.dashboard_sql_client.fetch_account_mac_map(
+                refresh_accounts,
+                query_session=query_session,
+            )
             self._account_mac_cache.update(refreshed_cache)
             self._account_mac_refreshed_at = datetime.utcnow()
             logger.info("Refreshed middleware account-to-modem cache. row_count=%s", len(refreshed_cache))
@@ -85,7 +96,11 @@ class MiddlewareDataCache:
                 if account_number in self._account_mac_cache
             }
 
-    def _get_modem_health_rows(self, mac_addresses: list[str]) -> dict[str, dict[str, Any]]:
+    def _get_modem_health_rows(
+        self,
+        mac_addresses: list[str],
+        query_session: DashboardSqlQuerySession | None = None,
+    ) -> dict[str, dict[str, Any]]:
         stale_macs = []
         now = datetime.utcnow()
         for mac_address in mac_addresses:
@@ -94,7 +109,10 @@ class MiddlewareDataCache:
                 stale_macs.append(mac_address)
 
         if stale_macs:
-            fetched_rows = self.dashboard_sql_client.fetch_latest_modem_health(stale_macs)
+            fetched_rows = self.dashboard_sql_client.fetch_latest_modem_health(
+                stale_macs,
+                query_session=query_session,
+            )
             with self._lock:
                 for mac_address, row in fetched_rows.items():
                     self._modem_health_cache[mac_address] = row

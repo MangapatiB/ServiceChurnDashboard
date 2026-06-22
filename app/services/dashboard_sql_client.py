@@ -7,6 +7,50 @@ from app.services.query_builders import normalize_limit, sanitize_location
 logger = logging.getLogger(__name__)
 
 
+class DashboardSqlQuerySession:
+    def __init__(self, client: "DashboardSqlClient"):
+        self._client = client
+        self._connection = None
+
+    def __enter__(self) -> "DashboardSqlQuerySession":
+        self._connection = self._client._open_connection()
+        return self
+
+    def __exit__(self, exc_type, exc, exc_tb) -> None:
+        if self._connection is not None:
+            self._connection.close()
+            self._connection = None
+
+    def fetch_rows(self, query: str, params: list[Any] | None = None) -> list[tuple[Any, ...]]:
+        cursor = None
+        try:
+            cursor = self._connection.cursor()
+            cursor.execute(query, *(params or []))
+            return [tuple(row) for row in cursor.fetchall()]
+        finally:
+            if cursor is not None:
+                cursor.close()
+
+    def fetch_dict_rows(self, query: str, params: list[Any] | None = None) -> list[dict[str, Any]]:
+        cursor = None
+        try:
+            cursor = self._connection.cursor()
+            cursor.execute(query, *(params or []))
+            column_names = [column[0] for column in cursor.description]
+            rows = []
+            for row in cursor.fetchall():
+                rows.append(
+                    {
+                        column_name: self._client._serialize_value(value)
+                        for column_name, value in zip(column_names, row, strict=False)
+                    }
+                )
+            return rows
+        finally:
+            if cursor is not None:
+                cursor.close()
+
+
 class DashboardSqlClient:
     def __init__(self, config: dict[str, Any]):
         self.server = config.get("DASHBOARD_SQL_SERVER", "")
@@ -31,17 +75,25 @@ class DashboardSqlClient:
     def is_configured(self) -> bool:
         return all([self.server, self.database, self.username, self.password, self.driver])
 
-    def fetch_location_options(self) -> list[str]:
+    def open_session(self) -> DashboardSqlQuerySession:
+        return DashboardSqlQuerySession(self)
+
+    def fetch_location_options(self, query_session: DashboardSqlQuerySession | None = None) -> list[str]:
         query = (
             f"SELECT DISTINCT UPPER(BillingCity) AS BillingCity "
             f"FROM {self._qualified_table(self.truckroll_table)} "
             "WHERE BillingCity IS NOT NULL "
             "ORDER BY BillingCity"
         )
-        rows = self._fetch_rows(query)
+        rows = self._fetch_rows(query, query_session=query_session)
         return [str(row[0]).strip() for row in rows if row and row[0] is not None]
 
-    def fetch_truckroll_rows(self, location: str = "", limit: int | None = None) -> list[tuple[Any, ...]]:
+    def fetch_truckroll_rows(
+        self,
+        location: str = "",
+        limit: int | None = None,
+        query_session: DashboardSqlQuerySession | None = None,
+    ) -> list[tuple[Any, ...]]:
         safe_location = sanitize_location(location)
         safe_limit = normalize_limit(limit, default=25)
         params: list[Any] = []
@@ -58,9 +110,14 @@ class DashboardSqlClient:
             "CASE WHEN BillingCity IS NULL OR LTRIM(RTRIM(BillingCity)) = '' THEN 1 ELSE 0 END, "
             "UPPER(BillingCity), SubscriberAccountNumber"
         )
-        return self._fetch_rows(query, params)
+        return self._fetch_rows(query, params, query_session=query_session)
 
-    def fetch_churn_rows(self, account_numbers: list[str], customer_segment: str) -> list[tuple[Any, ...]]:
+    def fetch_churn_rows(
+        self,
+        account_numbers: list[str],
+        customer_segment: str,
+        query_session: DashboardSqlQuerySession | None = None,
+    ) -> list[tuple[Any, ...]]:
         sanitized_accounts = self._sanitize_string_keys(account_numbers)
         if not sanitized_accounts:
             return []
@@ -75,10 +132,15 @@ class DashboardSqlClient:
                 f"WHERE SubscriberAccountNumber IN ({placeholders}) "
                 "ORDER BY ChurnProbability DESC"
             )
-            rows.extend(self._fetch_rows(query, batch))
+            rows.extend(self._fetch_rows(query, batch, query_session=query_session))
         return rows
 
-    def fetch_call_monthly_rows(self, subscriber_account_numbers: list[str], customer_segment: str) -> list[tuple[Any, ...]]:
+    def fetch_call_monthly_rows(
+        self,
+        subscriber_account_numbers: list[str],
+        customer_segment: str,
+        query_session: DashboardSqlQuerySession | None = None,
+    ) -> list[tuple[Any, ...]]:
         sanitized_accounts = self._sanitize_string_keys(subscriber_account_numbers)
         if not sanitized_accounts:
             return []
@@ -94,10 +156,15 @@ class DashboardSqlClient:
                 f"WHERE CustomerType = ? AND AccountNumber IN ({placeholders}) "
                 "ORDER BY MonthStart"
             )
-            rows.extend(self._fetch_rows(query, [customer_type_code, *batch]))
+            rows.extend(self._fetch_rows(query, [customer_type_code, *batch], query_session=query_session))
         return rows
 
-    def fetch_call_record_rows(self, account_numbers: list[str], customer_segment: str) -> list[tuple[Any, ...]]:
+    def fetch_call_record_rows(
+        self,
+        account_numbers: list[str],
+        customer_segment: str,
+        query_session: DashboardSqlQuerySession | None = None,
+    ) -> list[tuple[Any, ...]]:
         sanitized_accounts = self._sanitize_string_keys(account_numbers)
         if not sanitized_accounts:
             return []
@@ -112,10 +179,14 @@ class DashboardSqlClient:
                 f"WHERE CustomerType = ? AND (SubscriberAccount IN ({placeholders}) OR CustomerAccount IN ({placeholders})) "
                 "ORDER BY MonthStart DESC, NumberOfCalls DESC"
             )
-            rows.extend(self._fetch_rows(query, [customer_type_code, *batch, *batch]))
+            rows.extend(self._fetch_rows(query, [customer_type_code, *batch, *batch], query_session=query_session))
         return rows
 
-    def fetch_account_mac_map(self, account_numbers: list[str] | None = None) -> dict[str, str]:
+    def fetch_account_mac_map(
+        self,
+        account_numbers: list[str] | None = None,
+        query_session: DashboardSqlQuerySession | None = None,
+    ) -> dict[str, str]:
         sanitized_accounts = self._sanitize_string_keys(account_numbers or [])
         account_mac_map: dict[str, str] = {}
         if sanitized_accounts:
@@ -126,7 +197,7 @@ class DashboardSqlClient:
                     f"FROM {self._qualified_table(self.account_mac_table)} "
                     f"WHERE AccountNumber IN ({placeholders})"
                 )
-                rows = self._fetch_rows(query, batch)
+                rows = self._fetch_rows(query, batch, query_session=query_session)
                 for row in rows:
                     if len(row) < 2:
                         continue
@@ -138,7 +209,8 @@ class DashboardSqlClient:
 
         rows = self._fetch_rows(
             "SELECT AccountNumber, ModemMac "
-            f"FROM {self._qualified_table(self.account_mac_table)}"
+            f"FROM {self._qualified_table(self.account_mac_table)}",
+            query_session=query_session,
         )
         for row in rows:
             if len(row) < 2:
@@ -149,7 +221,11 @@ class DashboardSqlClient:
                 account_mac_map[account_number] = modem_mac
         return account_mac_map
 
-    def fetch_latest_modem_health(self, mac_addresses: list[str]) -> dict[str, dict[str, Any]]:
+    def fetch_latest_modem_health(
+        self,
+        mac_addresses: list[str],
+        query_session: DashboardSqlQuerySession | None = None,
+    ) -> dict[str, dict[str, Any]]:
         sanitized_macs = []
         seen_macs = set()
         for mac_address in mac_addresses:
@@ -188,21 +264,28 @@ class DashboardSqlClient:
                 f"FROM {self._qualified_table(self.modem_health_table)} "
                 f"WHERE ModemMac IN ({placeholders})"
             )
-            for row in self._fetch_dict_rows(query, batch):
+            for row in self._fetch_dict_rows(query, batch, query_session=query_session):
                 modem_key = self.normalize_mac_key(row.get("normalized_mac_key") or row.get("mac"))
                 if modem_key:
                     modem_rows[modem_key] = row
         return modem_rows
 
-    def _fetch_rows(self, query: str, params: list[Any] | None = None) -> list[tuple[Any, ...]]:
+    def _fetch_rows(
+        self,
+        query: str,
+        params: list[Any] | None = None,
+        query_session: DashboardSqlQuerySession | None = None,
+    ) -> list[tuple[Any, ...]]:
         if not self.is_configured():
             raise RuntimeError("Dashboard SQL Server is not fully configured.")
+
+        if query_session is not None:
+            return query_session.fetch_rows(query, params)
 
         connection = None
         cursor = None
         try:
-            pyodbc = __import__("pyodbc")
-            connection = pyodbc.connect(self._build_connection_string(), timeout=self.timeout_seconds)
+            connection = self._open_connection()
             cursor = connection.cursor()
             cursor.execute(query, *(params or []))
             return [tuple(row) for row in cursor.fetchall()]
@@ -217,15 +300,22 @@ class DashboardSqlClient:
             if connection is not None:
                 connection.close()
 
-    def _fetch_dict_rows(self, query: str, params: list[Any] | None = None) -> list[dict[str, Any]]:
+    def _fetch_dict_rows(
+        self,
+        query: str,
+        params: list[Any] | None = None,
+        query_session: DashboardSqlQuerySession | None = None,
+    ) -> list[dict[str, Any]]:
         if not self.is_configured():
             raise RuntimeError("Dashboard SQL Server is not fully configured.")
+
+        if query_session is not None:
+            return query_session.fetch_dict_rows(query, params)
 
         connection = None
         cursor = None
         try:
-            pyodbc = __import__("pyodbc")
-            connection = pyodbc.connect(self._build_connection_string(), timeout=self.timeout_seconds)
+            connection = self._open_connection()
             cursor = connection.cursor()
             cursor.execute(query, *(params or []))
             column_names = [column[0] for column in cursor.description]
@@ -248,6 +338,13 @@ class DashboardSqlClient:
                 cursor.close()
             if connection is not None:
                 connection.close()
+
+    def _open_connection(self):
+        try:
+            pyodbc = __import__("pyodbc")
+            return pyodbc.connect(self._build_connection_string(), timeout=self.timeout_seconds)
+        except ModuleNotFoundError as exc:
+            raise RuntimeError("pyodbc is required for dashboard SQL Server integration.") from exc
 
     def _build_connection_string(self) -> str:
         server_value = self.server
