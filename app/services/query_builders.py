@@ -4,7 +4,7 @@ import re
 def sanitize_location(value: str) -> str:
     normalized = (value or "").strip().upper()
     normalized = re.sub(r"[^A-Z0-9\s\-']", "", normalized)
-    return normalized.replace("'", "''")
+    return normalized
 
 
 def normalize_customer_segment(value: str | None) -> str:
