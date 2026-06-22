@@ -132,7 +132,7 @@ spec:
             periodSeconds: 15
           livenessProbe:
             httpGet:
-              path: /
+              path: /healthz
               port: 8080
             initialDelaySeconds: 60
             periodSeconds: 30
@@ -140,7 +140,7 @@ spec:
             requests:
               cpu: 100m
               memory: 256Mi
-            limits:
+              path: /healthz
               cpu: 500m
               memory: 1Gi
 ---
