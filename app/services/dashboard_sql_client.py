@@ -7,6 +7,10 @@ from app.services.query_builders import normalize_limit, sanitize_location
 logger = logging.getLogger(__name__)
 
 
+SQL_SERVER_PARAMETER_LIMIT = 2100
+DEFAULT_DASHBOARD_SQL_BATCH_SIZE = 2000
+
+
 class DashboardSqlQuerySession:
     def __init__(self, client: "DashboardSqlClient"):
         self._client = client
@@ -56,7 +60,7 @@ class DashboardSqlClient:
         self.server = config.get("DASHBOARD_SQL_SERVER", "")
         self.port = str(config.get("DASHBOARD_SQL_PORT", "1433"))
         self.timeout_seconds = int(config.get("DASHBOARD_SQL_TIMEOUT_SECONDS", 15))
-        self.batch_size = int(config.get("DASHBOARD_SQL_BATCH_SIZE", 500))
+        self.batch_size = int(config.get("DASHBOARD_SQL_BATCH_SIZE", DEFAULT_DASHBOARD_SQL_BATCH_SIZE))
         self.database = config.get("DASHBOARD_SQL_DATABASE", "")
         self.username = config.get("DASHBOARD_SQL_USERNAME", "")
         self.password = config.get("DASHBOARD_SQL_PASSWORD", "")
@@ -147,7 +151,7 @@ class DashboardSqlClient:
 
         customer_type_code = "COM" if customer_segment == "com" else "RES"
         rows: list[tuple[Any, ...]] = []
-        for batch in self._iter_batches(sanitized_accounts):
+        for batch in self._iter_batches(sanitized_accounts, fixed_params=1):
             placeholders = ", ".join("?" for _ in batch)
             query = (
                 "SELECT NumberOfCalls, AccountNumber, MonthStart, ContactMonthStart, "
@@ -171,7 +175,7 @@ class DashboardSqlClient:
 
         customer_type_code = "COM" if customer_segment == "com" else "RES"
         rows: list[tuple[Any, ...]] = []
-        for batch in self._iter_batches(sanitized_accounts):
+        for batch in self._iter_batches(sanitized_accounts, parameter_multiplier=2, fixed_params=1):
             placeholders = ", ".join("?" for _ in batch)
             query = (
                 "SELECT CustomerAccount, SubscriberAccount, CustomerType, MonthStart, NumberOfCalls, TotalDurationMinutes, AvgDurationMinutes "
@@ -367,8 +371,15 @@ class DashboardSqlClient:
     def _qualified_table(self, table_name: str) -> str:
         return table_name if "." in table_name else f"{self.schema}.{table_name}"
 
-    def _iter_batches(self, items: list[str]) -> list[list[str]]:
-        batch_size = max(self.batch_size, 1)
+    def _iter_batches(
+        self,
+        items: list[str],
+        parameter_multiplier: int = 1,
+        fixed_params: int = 0,
+    ) -> list[list[str]]:
+        max_dynamic_params = SQL_SERVER_PARAMETER_LIMIT - max(fixed_params, 0)
+        safe_batch_size = max(max_dynamic_params // max(parameter_multiplier, 1), 1)
+        batch_size = min(max(self.batch_size, 1), safe_batch_size)
         return [items[index:index + batch_size] for index in range(0, len(items), batch_size)]
 
     @staticmethod
