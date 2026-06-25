@@ -1,0 +1,344 @@
+2026-06-21 23:39:13 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-21 23:39:13 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-21 23:39:15 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-21 23:39:33 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-21 23:39:33 | INFO | app | Request started | method=GET path=/ args={}
+2026-06-21 23:39:33 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-21 23:39:34 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-21 23:39:35 | INFO | app | Request completed | method=GET path=/ status=200 duration_ms=2030.21
+2026-06-21 23:40:16 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-21 23:40:16 | INFO | werkzeug | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2026-06-21 23:40:16 | INFO | werkzeug | [33mPress CTRL+C to quit[0m
+2026-06-21 23:40:16 | INFO | werkzeug |  * Restarting with stat
+2026-06-21 23:40:16 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-21 23:40:16 | WARNING | werkzeug |  * Debugger is active!
+2026-06-21 23:40:16 | INFO | werkzeug |  * Debugger PIN: 778-560-301
+2026-06-21 23:40:32 | INFO | app | Request started | method=GET path=/ args={}
+2026-06-21 23:40:32 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-21 23:40:33 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-21 23:40:34 | INFO | app | Request completed | method=GET path=/ status=200 duration_ms=2087.34
+2026-06-21 23:40:34 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:40:34] "GET / HTTP/1.1" 200 -
+2026-06-21 23:40:34 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:40:34 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=5.22
+2026-06-21 23:40:34 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:40:34] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:40:34 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:40:34 | INFO | app | Request started | method=GET path=/static/js/dashboard.js args={}
+2026-06-21 23:40:34 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=4.28
+2026-06-21 23:40:34 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:40:34] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:40:34 | INFO | app | Request completed | method=GET path=/static/js/dashboard.js status=304 duration_ms=2.81
+2026-06-21 23:40:34 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:40:34] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2026-06-21 23:40:34 | INFO | app | Request started | method=GET path=/favicon.ico args={}
+2026-06-21 23:40:34 | INFO | app | Request completed | method=GET path=/favicon.ico status=404 duration_ms=0.58
+2026-06-21 23:40:34 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:40:34] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-06-21 23:40:50 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '12'}
+2026-06-21 23:40:50 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-21 23:40:51 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:40:51 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=1320.66
+2026-06-21 23:40:51 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:40:51] "GET /api/dashboard?segment=res&location=&limit=12 HTTP/1.1" 200 -
+2026-06-21 23:41:00 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': 'ADDISON', 'limit': '12'}
+2026-06-21 23:41:00 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ADDISON limit=12 segment=res
+2026-06-21 23:41:02 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:41:02 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=1622.29
+2026-06-21 23:41:02 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:41:02] "GET /api/dashboard?segment=res&location=ADDISON&limit=12 HTTP/1.1" 200 -
+2026-06-21 23:41:07 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': 'ADKINS', 'limit': '12'}
+2026-06-21 23:41:07 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ADKINS limit=12 segment=res
+2026-06-21 23:41:08 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:41:08 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=1509.83
+2026-06-21 23:41:08 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:41:08] "GET /api/dashboard?segment=res&location=ADKINS&limit=12 HTTP/1.1" 200 -
+2026-06-21 23:41:22 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '1000'}
+2026-06-21 23:41:22 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=1000 segment=res
+2026-06-21 23:41:38 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=33
+2026-06-21 23:41:38 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=16612.97
+2026-06-21 23:41:38 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:41:38] "GET /api/dashboard?segment=res&location=&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:42:00 | INFO | app | Request started | method=GET path=/call-data args={'location': '', 'limit': '12', 'segment': 'res'}
+2026-06-21 23:42:01 | INFO | app | Request completed | method=GET path=/call-data status=200 duration_ms=1481.82
+2026-06-21 23:42:01 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:42:01] "GET /call-data?location=&limit=12&segment=res HTTP/1.1" 200 -
+2026-06-21 23:42:01 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:42:01 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=1.82
+2026-06-21 23:42:01 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:42:01] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:42:01 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:42:01 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=0.63
+2026-06-21 23:42:01 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:42:01] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:42:01 | INFO | app | Request started | method=GET path=/static/js/dashboard.js args={}
+2026-06-21 23:42:01 | INFO | app | Request completed | method=GET path=/static/js/dashboard.js status=304 duration_ms=1.16
+2026-06-21 23:42:01 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:42:01] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2026-06-21 23:42:06 | INFO | app | Request started | method=GET path=/call-data args={'segment': 'res', 'location': 'ADA', 'limit': '12'}
+2026-06-21 23:42:08 | INFO | app | Request completed | method=GET path=/call-data status=200 duration_ms=1441.55
+2026-06-21 23:42:08 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:42:08] "GET /call-data?segment=res&location=ADA&limit=12 HTTP/1.1" 200 -
+2026-06-21 23:42:08 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:42:08 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=1.06
+2026-06-21 23:42:08 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:42:08] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:42:08 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:42:08 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=1.49
+2026-06-21 23:42:08 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:42:08] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:42:08 | INFO | app | Request started | method=GET path=/static/js/dashboard.js args={}
+2026-06-21 23:42:08 | INFO | app | Request completed | method=GET path=/static/js/dashboard.js status=304 duration_ms=1.44
+2026-06-21 23:42:08 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:42:08] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2026-06-21 23:42:15 | INFO | app | Request started | method=GET path=/call-data args={'segment': 'res', 'location': 'ADA', 'limit': '1000'}
+2026-06-21 23:42:35 | INFO | app | Request completed | method=GET path=/call-data status=200 duration_ms=20417.15
+2026-06-21 23:42:35 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:42:35] "GET /call-data?segment=res&location=ADA&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:42:35 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:42:35 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=0.59
+2026-06-21 23:42:35 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:42:35] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:42:35 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:42:35 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=0.82
+2026-06-21 23:42:35 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:42:35] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:42:35 | INFO | app | Request started | method=GET path=/static/js/dashboard.js args={}
+2026-06-21 23:42:35 | INFO | app | Request completed | method=GET path=/static/js/dashboard.js status=304 duration_ms=0.88
+2026-06-21 23:42:35 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:42:35] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2026-06-21 23:43:05 | INFO | app | Request started | method=GET path=/call-data args={'segment': 'res', 'location': 'ALBUQUERQUE', 'limit': '1000'}
+2026-06-21 23:43:07 | INFO | app | Request completed | method=GET path=/call-data status=200 duration_ms=1499.62
+2026-06-21 23:43:07 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:43:07] "GET /call-data?segment=res&location=ALBUQUERQUE&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:43:07 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:43:07 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=1.65
+2026-06-21 23:43:07 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:43:07] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:43:07 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:43:07 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=3.88
+2026-06-21 23:43:07 | INFO | app | Request started | method=GET path=/static/js/dashboard.js args={}
+2026-06-21 23:43:07 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:43:07] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:43:07 | INFO | app | Request completed | method=GET path=/static/js/dashboard.js status=304 duration_ms=3.14
+2026-06-21 23:43:07 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:43:07] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2026-06-21 23:43:18 | INFO | app | Request started | method=GET path=/ args={'location': 'ALBUQUERQUE', 'limit': '1000', 'segment': 'res'}
+2026-06-21 23:43:19 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALBUQUERQUE limit=1000 segment=res
+2026-06-21 23:43:20 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:43:20 | INFO | app | Request completed | method=GET path=/ status=200 duration_ms=2140.02
+2026-06-21 23:43:20 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:43:20] "GET /?location=ALBUQUERQUE&limit=1000&segment=res HTTP/1.1" 200 -
+2026-06-21 23:43:20 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:43:20 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=0.78
+2026-06-21 23:43:20 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:43:20] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:43:20 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:43:20 | INFO | app | Request started | method=GET path=/static/js/dashboard.js args={}
+2026-06-21 23:43:20 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=2.59
+2026-06-21 23:43:20 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:43:20] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:43:20 | INFO | app | Request completed | method=GET path=/static/js/dashboard.js status=304 duration_ms=2.20
+2026-06-21 23:43:20 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:43:20] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2026-06-21 23:44:20 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': 'ALBUQUERQUE', 'limit': '1000'}
+2026-06-21 23:44:20 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALBUQUERQUE limit=1000 segment=res
+2026-06-21 23:44:22 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:44:22 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=2112.15
+2026-06-21 23:44:22 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:44:22] "GET /api/dashboard?segment=res&location=ALBUQUERQUE&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:45:20 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': 'ALBUQUERQUE', 'limit': '1000'}
+2026-06-21 23:45:20 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALBUQUERQUE limit=1000 segment=res
+2026-06-21 23:45:22 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:45:22 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=1978.93
+2026-06-21 23:45:22 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:45:22] "GET /api/dashboard?segment=res&location=ALBUQUERQUE&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:46:20 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': 'ALBUQUERQUE', 'limit': '1000'}
+2026-06-21 23:46:20 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALBUQUERQUE limit=1000 segment=res
+2026-06-21 23:46:22 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:46:22 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=1968.52
+2026-06-21 23:46:22 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:46:22] "GET /api/dashboard?segment=res&location=ALBUQUERQUE&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:47:01 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '1000'}
+2026-06-21 23:47:01 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=1000 segment=res
+2026-06-21 23:47:16 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:47:16 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=14573.75
+2026-06-21 23:47:16 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:47:16] "GET /api/dashboard?segment=res&location=&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:47:20 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '1000'}
+2026-06-21 23:47:20 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=1000 segment=res
+2026-06-21 23:47:34 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:47:34 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=13791.53
+2026-06-21 23:47:34 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:47:34] "GET /api/dashboard?segment=res&location=&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:48:21 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '1000'}
+2026-06-21 23:48:21 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=1000 segment=res
+2026-06-21 23:48:35 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:48:35 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=14290.48
+2026-06-21 23:48:35 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:48:35] "GET /api/dashboard?segment=res&location=&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:49:06 | INFO | app | Request started | method=GET path=/operations args={'location': 'ALBUQUERQUE', 'limit': '1000', 'segment': 'res'}
+2026-06-21 23:49:07 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALBUQUERQUE limit=1000 segment=res
+2026-06-21 23:49:08 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:49:08 | INFO | app | Request completed | method=GET path=/operations status=200 duration_ms=2122.60
+2026-06-21 23:49:08 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:49:08] "GET /operations?location=ALBUQUERQUE&limit=1000&segment=res HTTP/1.1" 200 -
+2026-06-21 23:49:08 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:49:08 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=1.66
+2026-06-21 23:49:08 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:49:08] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:49:08 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:49:08 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=0.65
+2026-06-21 23:49:08 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:49:08] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:52:14 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-21 23:52:14 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-21 23:52:16 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-21 23:52:22 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-21 23:52:22 | INFO | app | Request started | method=GET path=/ args={'segment': 'res', 'limit': '12'}
+2026-06-21 23:52:23 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-21 23:52:23 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-21 23:52:24 | INFO | app | Request completed | method=GET path=/ status=200 duration_ms=2027.71
+2026-06-21 23:56:11 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-21 23:56:11 | INFO | werkzeug | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2026-06-21 23:56:11 | INFO | werkzeug | [33mPress CTRL+C to quit[0m
+2026-06-21 23:56:11 | INFO | werkzeug |  * Restarting with stat
+2026-06-21 23:56:11 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-21 23:56:11 | WARNING | werkzeug |  * Debugger is active!
+2026-06-21 23:56:11 | INFO | werkzeug |  * Debugger PIN: 778-560-301
+2026-06-21 23:56:23 | INFO | app | Request started | method=GET path=/ args={}
+2026-06-21 23:56:23 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-21 23:56:24 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-21 23:56:25 | INFO | app | Request completed | method=GET path=/ status=200 duration_ms=2138.97
+2026-06-21 23:56:25 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:25] "GET / HTTP/1.1" 200 -
+2026-06-21 23:56:25 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:56:25 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=6.59
+2026-06-21 23:56:25 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:25] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:56:25 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:56:25 | INFO | app | Request started | method=GET path=/static/js/dashboard.js args={}
+2026-06-21 23:56:25 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=3.16
+2026-06-21 23:56:25 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:25] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:56:25 | INFO | app | Request completed | method=GET path=/static/js/dashboard.js status=304 duration_ms=2.26
+2026-06-21 23:56:25 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:25] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2026-06-21 23:56:31 | INFO | app | Request started | method=GET path=/call-data args={'location': '', 'limit': '12', 'segment': 'res'}
+2026-06-21 23:56:32 | INFO | app | Request completed | method=GET path=/call-data status=200 duration_ms=1400.88
+2026-06-21 23:56:32 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:32] "GET /call-data?location=&limit=12&segment=res HTTP/1.1" 200 -
+2026-06-21 23:56:32 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:56:32 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=1.88
+2026-06-21 23:56:32 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:32] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:56:32 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:56:32 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=0.60
+2026-06-21 23:56:32 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:32] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:56:32 | INFO | app | Request started | method=GET path=/static/js/dashboard.js args={}
+2026-06-21 23:56:32 | INFO | app | Request completed | method=GET path=/static/js/dashboard.js status=304 duration_ms=1.26
+2026-06-21 23:56:32 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:32] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2026-06-21 23:56:34 | INFO | app | Request started | method=GET path=/ args={'location': '', 'limit': '12', 'segment': 'res'}
+2026-06-21 23:56:34 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-21 23:56:35 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:56:35 | INFO | app | Request completed | method=GET path=/ status=200 duration_ms=1552.98
+2026-06-21 23:56:35 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:35] "GET /?location=&limit=12&segment=res HTTP/1.1" 200 -
+2026-06-21 23:56:35 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:56:35 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=2.39
+2026-06-21 23:56:35 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:35] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:56:36 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:56:36 | INFO | app | Request started | method=GET path=/static/js/dashboard.js args={}
+2026-06-21 23:56:36 | INFO | app | Request completed | method=GET path=/static/js/dashboard.js status=304 duration_ms=2.03
+2026-06-21 23:56:36 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=5.17
+2026-06-21 23:56:36 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:36] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2026-06-21 23:56:36 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:36] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:56:37 | INFO | app | Request started | method=GET path=/operations args={'location': '', 'limit': '12', 'segment': 'res'}
+2026-06-21 23:56:37 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-21 23:56:38 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:56:38 | INFO | app | Request completed | method=GET path=/operations status=200 duration_ms=1445.64
+2026-06-21 23:56:38 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:38] "GET /operations?location=&limit=12&segment=res HTTP/1.1" 200 -
+2026-06-21 23:56:39 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:56:39 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=1.22
+2026-06-21 23:56:39 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:39] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:56:39 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:56:39 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=1.10
+2026-06-21 23:56:39 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:39] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:56:43 | INFO | app | Request started | method=GET path=/operations args={'segment': 'res', 'location': 'ADA', 'limit': '12'}
+2026-06-21 23:56:43 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ADA limit=12 segment=res
+2026-06-21 23:56:44 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:56:44 | INFO | app | Request completed | method=GET path=/operations status=200 duration_ms=1509.81
+2026-06-21 23:56:44 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:44] "GET /operations?segment=res&location=ADA&limit=12 HTTP/1.1" 200 -
+2026-06-21 23:56:44 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:56:44 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=1.04
+2026-06-21 23:56:44 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:44] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:56:44 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:56:44 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=1.95
+2026-06-21 23:56:44 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:44] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:56:54 | INFO | app | Request started | method=GET path=/operations args={'segment': 'res', 'location': 'ADDISON', 'limit': '1000'}
+2026-06-21 23:56:55 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ADDISON limit=1000 segment=res
+2026-06-21 23:56:56 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:56:56 | INFO | app | Request completed | method=GET path=/operations status=200 duration_ms=1813.68
+2026-06-21 23:56:56 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:56] "GET /operations?segment=res&location=ADDISON&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:56:56 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:56:56 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=1.49
+2026-06-21 23:56:56 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:56] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:56:56 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:56:56 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=0.71
+2026-06-21 23:56:56 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:56:56] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:56:59 | INFO | app | Request started | method=GET path=/operations args={'segment': 'res', 'location': '', 'limit': '1000'}
+2026-06-21 23:56:59 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=1000 segment=res
+2026-06-21 23:57:13 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=33
+2026-06-21 23:57:13 | INFO | app | Request completed | method=GET path=/operations status=200 duration_ms=14463.01
+2026-06-21 23:57:13 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:57:13] "GET /operations?segment=res&location=&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:57:13 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:57:13 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=1.67
+2026-06-21 23:57:13 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:57:13] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:57:13 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:57:13 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=0.85
+2026-06-21 23:57:13 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:57:13] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:57:56 | INFO | app | Request started | method=GET path=/operations args={'segment': 'res', 'location': '', 'limit': '1000'}
+2026-06-21 23:57:57 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=1000 segment=res
+2026-06-21 23:58:10 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:58:10 | INFO | app | Request completed | method=GET path=/operations status=200 duration_ms=13728.76
+2026-06-21 23:58:10 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:10] "GET /operations?segment=res&location=&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:58:10 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:58:10 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=0.67
+2026-06-21 23:58:10 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:10] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:58:10 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:58:10 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=2.26
+2026-06-21 23:58:10 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:10] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:58:25 | INFO | app | Request started | method=GET path=/operations args={'segment': 'res', 'location': 'AMERICAN FALLS', 'limit': '1000'}
+2026-06-21 23:58:26 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=AMERICAN FALLS limit=1000 segment=res
+2026-06-21 23:58:27 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:58:27 | INFO | app | Request completed | method=GET path=/operations status=200 duration_ms=1894.08
+2026-06-21 23:58:27 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:27] "GET /operations?segment=res&location=AMERICAN+FALLS&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:58:27 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:58:27 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=2.36
+2026-06-21 23:58:27 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:27] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:58:27 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:58:27 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=1.10
+2026-06-21 23:58:27 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:27] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:58:36 | INFO | app | Request started | method=GET path=/operations args={'segment': 'res', 'location': 'DEXTER', 'limit': '1000'}
+2026-06-21 23:58:36 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=DEXTER limit=1000 segment=res
+2026-06-21 23:58:40 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=8
+2026-06-21 23:58:41 | INFO | app | Request completed | method=GET path=/operations status=200 duration_ms=4889.75
+2026-06-21 23:58:41 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:41] "GET /operations?segment=res&location=DEXTER&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:58:41 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:58:41 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=0.60
+2026-06-21 23:58:41 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:41] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:58:41 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:58:41 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=0.64
+2026-06-21 23:58:41 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:41] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:58:46 | INFO | app | Request started | method=GET path=/operations args={'segment': 'res', 'location': 'ZEIGLER', 'limit': '1000'}
+2026-06-21 23:58:47 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ZEIGLER limit=1000 segment=res
+2026-06-21 23:58:48 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:58:48 | INFO | app | Request completed | method=GET path=/operations status=200 duration_ms=1691.64
+2026-06-21 23:58:48 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:48] "GET /operations?segment=res&location=ZEIGLER&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:58:48 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:58:48 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=0.91
+2026-06-21 23:58:48 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:48] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:58:48 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:58:48 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=0.75
+2026-06-21 23:58:48 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:48] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:58:52 | INFO | app | Request started | method=GET path=/operations args={'segment': 'res', 'location': 'YUMA', 'limit': '1000'}
+2026-06-21 23:58:52 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=YUMA limit=1000 segment=res
+2026-06-21 23:58:53 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:58:54 | INFO | app | Request completed | method=GET path=/operations status=200 duration_ms=1844.83
+2026-06-21 23:58:54 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:54] "GET /operations?segment=res&location=YUMA&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:58:54 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:58:54 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=1.75
+2026-06-21 23:58:54 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:54] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:58:54 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:58:54 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=1.08
+2026-06-21 23:58:54 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:54] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:58:57 | INFO | app | Request started | method=GET path=/operations args={'segment': 'res', 'location': 'YAZOO CITY', 'limit': '1000'}
+2026-06-21 23:58:58 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=YAZOO CITY limit=1000 segment=res
+2026-06-21 23:58:59 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:58:59 | INFO | app | Request completed | method=GET path=/operations status=200 duration_ms=1854.91
+2026-06-21 23:58:59 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:59] "GET /operations?segment=res&location=YAZOO+CITY&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:58:59 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:58:59 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=0.78
+2026-06-21 23:58:59 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:59] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:58:59 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:58:59 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=0.97
+2026-06-21 23:58:59 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:58:59] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:59:04 | INFO | app | Request started | method=GET path=/operations args={'segment': 'res', 'location': 'WISNER', 'limit': '1000'}
+2026-06-21 23:59:05 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=WISNER limit=1000 segment=res
+2026-06-21 23:59:06 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-21 23:59:06 | INFO | app | Request completed | method=GET path=/operations status=200 duration_ms=1934.93
+2026-06-21 23:59:06 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:59:06] "GET /operations?segment=res&location=WISNER&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:59:06 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:59:06 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=1.89
+2026-06-21 23:59:06 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:59:06] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:59:06 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:59:06 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=1.15
+2026-06-21 23:59:06 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:59:06] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-21 23:59:11 | INFO | app | Request started | method=GET path=/operations args={'segment': 'res', 'location': 'WILDER', 'limit': '1000'}
+2026-06-21 23:59:11 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=WILDER limit=1000 segment=res
+2026-06-21 23:59:12 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=2
+2026-06-21 23:59:13 | INFO | app | Request completed | method=GET path=/operations status=200 duration_ms=2054.22
+2026-06-21 23:59:13 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:59:13] "GET /operations?segment=res&location=WILDER&limit=1000 HTTP/1.1" 200 -
+2026-06-21 23:59:13 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-21 23:59:13 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=1.38
+2026-06-21 23:59:13 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:59:13] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-21 23:59:13 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-21 23:59:13 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=2.24
+2026-06-21 23:59:13 | INFO | werkzeug | 127.0.0.1 - - [21/Jun/2026 23:59:13] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -

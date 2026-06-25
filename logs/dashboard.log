@@ -1,0 +1,112 @@
+2026-06-22 00:02:12 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-22 00:02:12 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'limit': '10000'}
+2026-06-22 00:02:12 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-06-22 00:04:25 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=287
+2026-06-22 00:04:27 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-22 00:04:27 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=135297.24
+2026-06-22 00:04:37 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-22 00:04:37 | INFO | werkzeug | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2026-06-22 00:04:37 | INFO | werkzeug | [33mPress CTRL+C to quit[0m
+2026-06-22 00:04:37 | INFO | werkzeug |  * Restarting with stat
+2026-06-22 00:04:37 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-22 00:04:37 | WARNING | werkzeug |  * Debugger is active!
+2026-06-22 00:04:37 | INFO | werkzeug |  * Debugger PIN: 778-560-301
+2026-06-22 00:04:49 | INFO | app | Request started | method=GET path=/o args={}
+2026-06-22 00:04:49 | INFO | app | Request completed | method=GET path=/o status=404 duration_ms=1.42
+2026-06-22 00:04:49 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 00:04:49] "[33mGET /o HTTP/1.1[0m" 404 -
+2026-06-22 00:05:04 | INFO | app | Request started | method=GET path=/ args={}
+2026-06-22 00:05:05 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-22 00:05:06 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-22 00:05:07 | INFO | app | Request completed | method=GET path=/ status=200 duration_ms=2579.19
+2026-06-22 00:05:07 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 00:05:07] "GET / HTTP/1.1" 200 -
+2026-06-22 00:05:07 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-22 00:05:07 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=5.27
+2026-06-22 00:05:07 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 00:05:07] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-22 00:05:07 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-22 00:05:07 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=1.22
+2026-06-22 00:05:07 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 00:05:07] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-22 00:05:07 | INFO | app | Request started | method=GET path=/static/js/dashboard.js args={}
+2026-06-22 00:05:07 | INFO | app | Request completed | method=GET path=/static/js/dashboard.js status=304 duration_ms=2.60
+2026-06-22 00:05:07 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 00:05:07] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2026-06-22 00:05:15 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '1000'}
+2026-06-22 00:05:15 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=1000 segment=res
+2026-06-22 00:05:28 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=33
+2026-06-22 00:05:29 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=14157.39
+2026-06-22 00:05:29 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 00:05:29] "GET /api/dashboard?segment=res&location=&limit=1000 HTTP/1.1" 200 -
+2026-06-22 00:05:35 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '1000'}
+2026-06-22 00:05:35 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=1000 segment=res
+2026-06-22 00:05:48 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-22 00:05:49 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=13553.87
+2026-06-22 00:05:49 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 00:05:49] "GET /api/dashboard?segment=res&location=&limit=1000 HTTP/1.1" 200 -
+2026-06-22 00:06:01 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '1000'}
+2026-06-22 00:06:01 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=1000 segment=res
+2026-06-22 00:06:14 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-22 00:06:14 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=13642.13
+2026-06-22 00:06:14 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 00:06:14] "GET /api/dashboard?segment=res&location=&limit=1000 HTTP/1.1" 200 -
+2026-06-22 00:07:00 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-22 00:07:00 | INFO | app | Request started | method=GET path=/ args={}
+2026-06-22 00:07:00 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-22 00:07:01 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-22 00:07:02 | INFO | app | Request completed | method=GET path=/ status=200 duration_ms=2048.35
+2026-06-22 00:07:08 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '1000'}
+2026-06-22 00:07:08 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=1000 segment=res
+2026-06-22 00:07:12 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-22 00:07:12 | INFO | werkzeug | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2026-06-22 00:07:12 | INFO | werkzeug | [33mPress CTRL+C to quit[0m
+2026-06-22 00:07:12 | INFO | werkzeug |  * Restarting with stat
+2026-06-22 00:07:12 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-22 00:07:12 | WARNING | werkzeug |  * Debugger is active!
+2026-06-22 00:07:12 | INFO | werkzeug |  * Debugger PIN: 778-560-301
+2026-06-22 00:07:21 | INFO | app | Request started | method=GET path=/ args={}
+2026-06-22 00:07:22 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-22 00:07:23 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-22 00:07:23 | INFO | app | Request completed | method=GET path=/ status=200 duration_ms=2006.22
+2026-06-22 00:07:23 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 00:07:23] "GET / HTTP/1.1" 200 -
+2026-06-22 00:07:23 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-22 00:07:23 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=4.72
+2026-06-22 00:07:23 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 00:07:23] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-22 00:07:23 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-22 00:07:23 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=1.52
+2026-06-22 00:07:23 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 00:07:23] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-22 00:07:23 | INFO | app | Request started | method=GET path=/static/js/dashboard.js args={}
+2026-06-22 00:07:23 | INFO | app | Request completed | method=GET path=/static/js/dashboard.js status=304 duration_ms=2.05
+2026-06-22 00:07:23 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 00:07:23] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2026-06-22 00:07:28 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '10000'}
+2026-06-22 00:07:28 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-06-22 00:09:41 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=286
+2026-06-22 00:09:43 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=135077.06
+2026-06-22 00:09:43 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 00:09:43] "GET /api/dashboard?segment=res&location=&limit=10000 HTTP/1.1" 200 -
+2026-06-22 00:43:08 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-22 00:43:08 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '10000'}
+2026-06-22 00:43:08 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-06-22 00:45:14 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=287
+2026-06-22 00:45:18 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=129896.18
+2026-06-22 12:43:11 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-22 12:43:11 | INFO | werkzeug | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2026-06-22 12:43:11 | INFO | werkzeug | [33mPress CTRL+C to quit[0m
+2026-06-22 12:43:11 | INFO | werkzeug |  * Restarting with stat
+2026-06-22 12:43:12 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-22 12:43:12 | WARNING | werkzeug |  * Debugger is active!
+2026-06-22 12:43:12 | INFO | werkzeug |  * Debugger PIN: 778-560-301
+2026-06-22 12:44:56 | INFO | app | Request started | method=GET path=/ args={}
+2026-06-22 12:44:56 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-22 12:44:57 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-22 12:44:58 | INFO | app | Request completed | method=GET path=/ status=200 duration_ms=2083.87
+2026-06-22 12:44:58 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 12:44:58] "GET / HTTP/1.1" 200 -
+2026-06-22 12:44:58 | INFO | app | Request started | method=GET path=/static/css/styles.css args={}
+2026-06-22 12:44:58 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=304 duration_ms=5.11
+2026-06-22 12:44:58 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 12:44:58] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2026-06-22 12:44:58 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-06-22 12:44:58 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=1.74
+2026-06-22 12:44:58 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 12:44:58] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-06-22 12:44:58 | INFO | app | Request started | method=GET path=/static/js/dashboard.js args={}
+2026-06-22 12:44:58 | INFO | app | Request completed | method=GET path=/static/js/dashboard.js status=304 duration_ms=2.77
+2026-06-22 12:44:58 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 12:44:58] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2026-06-22 12:45:09 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '10000'}
+2026-06-22 12:45:09 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-06-22 12:47:08 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=286
+2026-06-22 12:47:10 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=121279.40
+2026-06-22 12:47:10 | INFO | werkzeug | 127.0.0.1 - - [22/Jun/2026 12:47:10] "GET /api/dashboard?segment=res&location=&limit=10000 HTTP/1.1" 200 -

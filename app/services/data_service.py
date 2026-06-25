@@ -586,6 +586,8 @@ class DashboardDataService:
             "number_of_calls": int(row[4]) if len(row) > 4 and row[4] is not None else 0,
             "total_duration_minutes": float(row[5]) if len(row) > 5 and row[5] is not None else 0,
             "avg_duration_minutes": float(row[6]) if len(row) > 6 and row[6] is not None else 0,
+            "client_sentiment": str(row[7]).upper() if len(row) > 7 and row[7] is not None else "UNKNOWN",
+            "is_resolved": bool(row[8]) if len(row) > 8 and row[8] is not None else False,
         }
 
     @staticmethod

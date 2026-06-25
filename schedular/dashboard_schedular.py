@@ -218,7 +218,7 @@ GROUP BY
 """
 
 CALL_RECORDS_MONTHLY_QUERY = """
-WITH ctn_summary AS (
+WITH ctn_enriched AS (
     SELECT
         CAST(ctn.CUST_ACCT_NO_CTN AS STRING) AS CustomerAccount,
         CAST(ctn.SUB_ACCT_NO_CTN AS STRING) AS SubscriberAccount,
@@ -226,10 +226,15 @@ WITH ctn_summary AS (
         DATE_TRUNC('month', ctn.START_DTE_TME_CTN) AS MonthStart,
         COUNT(*) AS NumberOfCalls,
         ROUND(SUM((unix_timestamp(ctn.FINISH_DTE_TME_CTN) - unix_timestamp(ctn.START_DTE_TME_CTN)) / 60.0), 2) AS TotalDurationMinutes,
-        ROUND(AVG((unix_timestamp(ctn.FINISH_DTE_TME_CTN) - unix_timestamp(ctn.START_DTE_TME_CTN)) / 60.0), 2) AS AvgDurationMinutes
+        ROUND(AVG((unix_timestamp(ctn.FINISH_DTE_TME_CTN) - unix_timestamp(ctn.START_DTE_TME_CTN)) / 60.0), 2) AS AvgDurationMinutes,
+        MAX(COALESCE(ct.client_sentiment, 'UNKNOWN')) AS LatestClientSentiment,
+        MAX(COALESCE(CAST(ct.is_resolved AS STRING), 'UNKNOWN')) AS LatestIsResolved
     FROM prod.bronze.dnadatawarehouse_ctn_interaction ctn
     INNER JOIN prod.bronze.dnadatawarehouse_sbb_base sbb
         ON ctn.CUST_ACCT_NO_CTN = sbb.CUST_ACCT_NO_SBB
+    LEFT JOIN prod.bronze.call_transcriptions ct
+        ON ctn.CUST_ACCT_NO_CTN = ct.from_address
+           OR CAST(ctn.CUST_ACCT_NO_CTN AS STRING) = REGEXP_REPLACE(ct.client_phone, '^\\+1', '')
     WHERE ctn.INTR_TYP_CTN IN ('Call In', 'Outbound Call')
       AND ctn.START_DTE_CTN >= DATE_ADD(CURRENT_DATE(), -365)
       AND ctn.SUB_ACCT_NO_CTN IS NOT NULL
@@ -240,7 +245,7 @@ WITH ctn_summary AS (
         DATE_TRUNC('month', ctn.START_DTE_TME_CTN)
 )
 SELECT *
-FROM ctn_summary
+FROM ctn_enriched
 """
 
 SOURCE_MODEM_QUERY = """
@@ -1273,6 +1278,8 @@ def get_call_records_source_query():
                 "NumberOfCalls",
                 "TotalDurationMinutes",
                 "AvgDurationMinutes",
+                "LatestClientSentiment",
+                "LatestIsResolved",
             ],
         )
     return CALL_RECORDS_MONTHLY_QUERY
@@ -1789,6 +1796,8 @@ def normalize_call_records_rows(rows):
                 int(row[4]) if row[4] not in (None, "") else None,
                 Decimal(row[5]) if row[5] not in (None, "") else None,
                 Decimal(row[6]) if row[6] not in (None, "") else None,
+                stringify_nullable(row[7]) if len(row) > 7 else "UNKNOWN",
+                row[8] == "true" if len(row) > 8 and row[8] not in (None, "") else False,
             )
         )
     return normalized
@@ -2634,13 +2643,13 @@ def refresh_once():
                 call_records_stage = make_stage_table_name("dbo.service_churn_call_records_monthly")
                 create_stage_table(target_cursor, "dbo.service_churn_call_records_monthly", call_records_stage)
                 call_records_sync_key_columns = ["CustomerAccount", "SubscriberAccount", "CustomerType", "MonthStart"]
-                call_records_sync_compare_columns = ["NumberOfCalls", "TotalDurationMinutes", "AvgDurationMinutes"]
+                call_records_sync_compare_columns = ["NumberOfCalls", "TotalDurationMinutes", "AvgDurationMinutes", "ClientSentiment", "IsResolved"]
                 call_records_insert_sql = build_insert_sql(
                     call_records_stage,
-                    ["CustomerAccount", "SubscriberAccount", "CustomerType", "MonthStart", "NumberOfCalls", "TotalDurationMinutes", "AvgDurationMinutes", "RefreshedAt"],
+                    ["CustomerAccount", "SubscriberAccount", "CustomerType", "MonthStart", "NumberOfCalls", "TotalDurationMinutes", "AvgDurationMinutes", "ClientSentiment", "IsResolved", "RefreshedAt"],
                 ).replace(
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, SYSUTCDATETIME())",
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, SYSUTCDATETIME())",
                 )
                 call_records_fetch_wait_started = time.perf_counter()
                 normalized_call_records_rows = call_records_fetch_future.result()
