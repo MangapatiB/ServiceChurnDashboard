@@ -84,8 +84,6 @@
                             <th>Number of calls</th>
                             <th>Total duration (min)</th>
                             <th>Average duration (min)</th>
-                            <th>Client sentiment</th>
-                            <th>Resolved</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -99,16 +97,6 @@
                                 <td>{{ item.number_of_calls }}</td>
                                 <td>{{ '%.2f'|format(item.total_duration_minutes) }}</td>
                                 <td>{{ '%.2f'|format(item.avg_duration_minutes) }}</td>
-                                <td>
-                                    <span class="sentiment-badge sentiment-{{ item.client_sentiment|lower }}">
-                                        {{ item.client_sentiment }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="resolved-badge {% if item.is_resolved %}resolved{% else %}unresolved{% endif %}">
-                                        {% if item.is_resolved %}✓ Yes{% else %}✗ No{% endif %}
-                                    </span>
-                                </td>
                             </tr>
                             {% endfor %}
                         {% else %}
