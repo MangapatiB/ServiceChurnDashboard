@@ -218,44 +218,7 @@ GROUP BY
 """
 
 CALL_RECORDS_MONTHLY_QUERY = """
-WITH latest_transcriptions AS (
-    SELECT
-        ct.contact_id,
-        ct.from_address,
-        ct.client_phone,
-        ct.start_time,
-        ct.is_resolved,
-        ct.client_sentiment,
-        ROW_NUMBER() OVER (PARTITION BY ct.contact_id ORDER BY ct.start_time DESC) AS row_rank
-    FROM prod.bronze.call_transcriptions ct
-),
-subscriber_phone_map AS (
-    SELECT DISTINCT
-        CAST(s.SubscriberAccountNumber AS STRING) AS SubscriberAccount,
-        CAST(s.CustomerAccountNumber AS STRING) AS CustomerAccount,
-        REGEXP_REPLACE(TRIM(CAST(s.CustomerPhoneNumber AS STRING)), '^\\+1', '') AS NormalizedCustomerPhone
-    FROM prod.silver.billingsystem_subscriber_history s
-    WHERE s.SubscriberAccountNumber IS NOT NULL
-      AND s.CustomerPhoneNumber IS NOT NULL
-),
-monthly_contact_sentiment AS (
-    SELECT
-        spm.CustomerAccount,
-        spm.SubscriberAccount,
-        DATE_TRUNC('month', lt.start_time) AS MonthStart,
-        MAX_BY(COALESCE(lt.client_sentiment, 'UNKNOWN'), lt.start_time) AS LatestClientSentiment,
-        MAX_BY(CAST(COALESCE(lt.is_resolved, FALSE) AS STRING), lt.start_time) AS LatestIsResolved
-    FROM latest_transcriptions lt
-    INNER JOIN subscriber_phone_map spm
-        ON REGEXP_REPLACE(TRIM(COALESCE(lt.from_address, lt.client_phone)), '^\\+1', '') = spm.NormalizedCustomerPhone
-    WHERE lt.row_rank = 1
-      AND lt.start_time IS NOT NULL
-    GROUP BY
-        spm.CustomerAccount,
-        spm.SubscriberAccount,
-        DATE_TRUNC('month', lt.start_time)
-),
-ctn_summary AS (
+WITH ctn_enriched AS (
     SELECT
         CAST(ctn.CUST_ACCT_NO_CTN AS STRING) AS CustomerAccount,
         CAST(ctn.SUB_ACCT_NO_CTN AS STRING) AS SubscriberAccount,
@@ -263,10 +226,15 @@ ctn_summary AS (
         DATE_TRUNC('month', ctn.START_DTE_TME_CTN) AS MonthStart,
         COUNT(*) AS NumberOfCalls,
         ROUND(SUM((unix_timestamp(ctn.FINISH_DTE_TME_CTN) - unix_timestamp(ctn.START_DTE_TME_CTN)) / 60.0), 2) AS TotalDurationMinutes,
-        ROUND(AVG((unix_timestamp(ctn.FINISH_DTE_TME_CTN) - unix_timestamp(ctn.START_DTE_TME_CTN)) / 60.0), 2) AS AvgDurationMinutes
+        ROUND(AVG((unix_timestamp(ctn.FINISH_DTE_TME_CTN) - unix_timestamp(ctn.START_DTE_TME_CTN)) / 60.0), 2) AS AvgDurationMinutes,
+        MAX(COALESCE(ct.client_sentiment, 'UNKNOWN')) AS LatestClientSentiment,
+        MAX(COALESCE(CAST(ct.is_resolved AS STRING), 'UNKNOWN')) AS LatestIsResolved
     FROM prod.bronze.dnadatawarehouse_ctn_interaction ctn
     INNER JOIN prod.bronze.dnadatawarehouse_sbb_base sbb
         ON ctn.CUST_ACCT_NO_CTN = sbb.CUST_ACCT_NO_SBB
+    LEFT JOIN prod.bronze.call_transcriptions ct
+        ON ctn.CUST_ACCT_NO_CTN = ct.from_address
+           OR CAST(ctn.CUST_ACCT_NO_CTN AS STRING) = REGEXP_REPLACE(ct.client_phone, '^\\+1', '')
     WHERE ctn.INTR_TYP_CTN IN ('Call In', 'Outbound Call')
       AND ctn.START_DTE_CTN >= DATE_ADD(CURRENT_DATE(), -365)
       AND ctn.SUB_ACCT_NO_CTN IS NOT NULL
@@ -276,21 +244,8 @@ ctn_summary AS (
         UPPER(TRIM(sbb.CUST_TYP_SBB)),
         DATE_TRUNC('month', ctn.START_DTE_TME_CTN)
 )
-SELECT
-    ctn.CustomerAccount,
-    ctn.SubscriberAccount,
-    ctn.CustomerType,
-    ctn.MonthStart,
-    ctn.NumberOfCalls,
-    ctn.TotalDurationMinutes,
-    ctn.AvgDurationMinutes,
-    COALESCE(mcs.LatestClientSentiment, 'UNKNOWN') AS LatestClientSentiment,
-    COALESCE(mcs.LatestIsResolved, 'false') AS LatestIsResolved
-FROM ctn_summary ctn
-LEFT JOIN monthly_contact_sentiment mcs
-    ON ctn.CustomerAccount = mcs.CustomerAccount
-   AND ctn.SubscriberAccount = mcs.SubscriberAccount
-   AND ctn.MonthStart = mcs.MonthStart
+SELECT *
+FROM ctn_enriched
 """
 
 SOURCE_MODEM_QUERY = """
