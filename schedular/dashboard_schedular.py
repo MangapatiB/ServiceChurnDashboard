@@ -252,7 +252,7 @@ monthly_transcription_flags AS (
         CustomerAccount,
         DATE_TRUNC('month', start_time)
 ),
-WITH ctn_summary AS (
+ctn_summary AS (
     SELECT
         CAST(ctn.CUST_ACCT_NO_CTN AS STRING) AS CustomerAccount,
         CAST(ctn.SUB_ACCT_NO_CTN AS STRING) AS SubscriberAccount,
