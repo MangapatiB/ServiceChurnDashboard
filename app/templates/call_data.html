@@ -84,6 +84,8 @@
                             <th>Number of calls</th>
                             <th>Total duration (min)</th>
                             <th>Average duration (min)</th>
+                            <th>Client sentiment</th>
+                            <th>Resolved</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -97,11 +99,13 @@
                                 <td>{{ item.number_of_calls }}</td>
                                 <td>{{ '%.2f'|format(item.total_duration_minutes) }}</td>
                                 <td>{{ '%.2f'|format(item.avg_duration_minutes) }}</td>
+                                <td>{{ item.client_sentiment }}</td>
+                                <td>{% if item.is_resolved %}Yes{% else %}No{% endif %}</td>
                             </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="7">
+                                <td colspan="9">
                                     <div class="empty-state empty-state--table">No call data records matched the current filter.</div>
                                 </td>
                             </tr>

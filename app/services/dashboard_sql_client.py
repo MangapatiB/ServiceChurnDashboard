@@ -178,7 +178,7 @@ class DashboardSqlClient:
         for batch in self._iter_batches(sanitized_accounts, parameter_multiplier=2, fixed_params=1):
             placeholders = ", ".join("?" for _ in batch)
             query = (
-                "SELECT CustomerAccount, SubscriberAccount, CustomerType, MonthStart, NumberOfCalls, TotalDurationMinutes, AvgDurationMinutes "
+                "SELECT CustomerAccount, SubscriberAccount, CustomerType, MonthStart, NumberOfCalls, TotalDurationMinutes, AvgDurationMinutes, ClientSentiment, IsResolved "
                 f"FROM {self._qualified_table(self.call_records_table)} "
                 f"WHERE CustomerType = ? AND (SubscriberAccount IN ({placeholders}) OR CustomerAccount IN ({placeholders})) "
                 "ORDER BY MonthStart DESC, NumberOfCalls DESC"

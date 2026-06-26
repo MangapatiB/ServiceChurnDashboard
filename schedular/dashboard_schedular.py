@@ -218,6 +218,40 @@ GROUP BY
 """
 
 CALL_RECORDS_MONTHLY_QUERY = """
+WITH transcription_latest AS (
+    SELECT
+        CAST(s.SubscriberAccountNumber AS STRING) AS SubscriberAccount,
+        CAST(s.CustomerAccountNumber AS STRING) AS CustomerAccount,
+        ct.start_time,
+        ct.is_resolved,
+        ct.client_sentiment
+    FROM prod.bronze.call_transcriptions ct
+    JOIN prod.silver.billingsystem_subscriber_history s
+        ON s.CustomerPhoneNumber = ct.from_address
+           OR s.CustomerPhoneNumber = REGEXP_REPLACE(ct.client_phone, '^\\+1', '')
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY ct.contact_id ORDER BY ct.start_time DESC) = 1
+),
+monthly_transcription_flags AS (
+    SELECT
+        SubscriberAccount,
+        CustomerAccount,
+        DATE_TRUNC('month', start_time) AS MonthStart,
+        MAX_BY(COALESCE(client_sentiment, 'UNKNOWN'), start_time) AS LatestClientSentiment,
+        MAX_BY(
+            CASE
+                WHEN is_resolved IS NULL THEN 'false'
+                WHEN LOWER(TRIM(CAST(is_resolved AS STRING))) IN ('true', '1', 'yes', 'y') THEN 'true'
+                ELSE 'false'
+            END,
+            start_time
+        ) AS LatestIsResolved
+    FROM transcription_latest
+    WHERE start_time IS NOT NULL
+    GROUP BY
+        SubscriberAccount,
+        CustomerAccount,
+        DATE_TRUNC('month', start_time)
+),
 WITH ctn_summary AS (
     SELECT
         CAST(ctn.CUST_ACCT_NO_CTN AS STRING) AS CustomerAccount,
@@ -240,7 +274,23 @@ WITH ctn_summary AS (
         DATE_TRUNC('month', ctn.START_DTE_TME_CTN)
 )
 SELECT *
-FROM ctn_summary
+FROM (
+    SELECT
+        ctn.CustomerAccount,
+        ctn.SubscriberAccount,
+        ctn.CustomerType,
+        ctn.MonthStart,
+        ctn.NumberOfCalls,
+        ctn.TotalDurationMinutes,
+        ctn.AvgDurationMinutes,
+        COALESCE(flags.LatestClientSentiment, 'UNKNOWN') AS LatestClientSentiment,
+        COALESCE(flags.LatestIsResolved, 'false') AS LatestIsResolved
+    FROM ctn_summary ctn
+    LEFT JOIN monthly_transcription_flags flags
+        ON ctn.SubscriberAccount = flags.SubscriberAccount
+       AND ctn.CustomerAccount = flags.CustomerAccount
+       AND ctn.MonthStart = flags.MonthStart
+) joined_summary
 """
 
 SOURCE_MODEM_QUERY = """
@@ -1273,6 +1323,8 @@ def get_call_records_source_query():
                 "NumberOfCalls",
                 "TotalDurationMinutes",
                 "AvgDurationMinutes",
+                "LatestClientSentiment",
+                "LatestIsResolved",
             ],
         )
     return CALL_RECORDS_MONTHLY_QUERY
@@ -1789,9 +1841,22 @@ def normalize_call_records_rows(rows):
                 int(row[4]) if row[4] not in (None, "") else None,
                 Decimal(row[5]) if row[5] not in (None, "") else None,
                 Decimal(row[6]) if row[6] not in (None, "") else None,
+                stringify_nullable(row[7]) if len(row) > 7 else "UNKNOWN",
+                str(row[8]).strip().lower() in ("true", "1", "yes", "y") if len(row) > 8 and row[8] not in (None, "") else False,
             )
         )
     return normalized
+
+
+def ensure_call_records_columns(cursor, table_name):
+    cursor.execute(
+        f"IF COL_LENGTH('{table_name}', 'ClientSentiment') IS NULL "
+        f"ALTER TABLE {table_name} ADD ClientSentiment VARCHAR(50) NULL"
+    )
+    cursor.execute(
+        f"IF COL_LENGTH('{table_name}', 'IsResolved') IS NULL "
+        f"ALTER TABLE {table_name} ADD IsResolved BIT NULL"
+    )
 
 
 def stringify_nullable(value):
@@ -2167,7 +2232,7 @@ def refresh_once():
                 call_records_source_query,
                 [
                     "CustomerAccount", "SubscriberAccount", "CustomerType", "MonthStart", "NumberOfCalls",
-                    "TotalDurationMinutes", "AvgDurationMinutes",
+                    "TotalDurationMinutes", "AvgDurationMinutes", "LatestClientSentiment", "LatestIsResolved",
                 ],
                 "call records monthly",
             )
@@ -2631,16 +2696,17 @@ def refresh_once():
                 logger.info("Skipping already refreshed table=%s", "dbo.service_churn_call_records_monthly")
             else:
                 logger.info("Refreshing table=%s", "dbo.service_churn_call_records_monthly")
+                ensure_call_records_columns(target_cursor, "dbo.service_churn_call_records_monthly")
                 call_records_stage = make_stage_table_name("dbo.service_churn_call_records_monthly")
                 create_stage_table(target_cursor, "dbo.service_churn_call_records_monthly", call_records_stage)
                 call_records_sync_key_columns = ["CustomerAccount", "SubscriberAccount", "CustomerType", "MonthStart"]
-                call_records_sync_compare_columns = ["NumberOfCalls", "TotalDurationMinutes", "AvgDurationMinutes"]
+                call_records_sync_compare_columns = ["NumberOfCalls", "TotalDurationMinutes", "AvgDurationMinutes", "ClientSentiment", "IsResolved"]
                 call_records_insert_sql = build_insert_sql(
                     call_records_stage,
-                    ["CustomerAccount", "SubscriberAccount", "CustomerType", "MonthStart", "NumberOfCalls", "TotalDurationMinutes", "AvgDurationMinutes", "RefreshedAt"],
+                    ["CustomerAccount", "SubscriberAccount", "CustomerType", "MonthStart", "NumberOfCalls", "TotalDurationMinutes", "AvgDurationMinutes", "ClientSentiment", "IsResolved", "RefreshedAt"],
                 ).replace(
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, SYSUTCDATETIME())",
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, SYSUTCDATETIME())",
                 )
                 call_records_fetch_wait_started = time.perf_counter()
                 normalized_call_records_rows = call_records_fetch_future.result()

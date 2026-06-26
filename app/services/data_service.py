@@ -578,6 +578,12 @@ class DashboardDataService:
     @staticmethod
     def _coerce_call_record_row(row: Any) -> dict[str, Any]:
         month_start = DashboardDataService._coerce_month_value(row[3]) if len(row) > 3 else None
+        resolved_value = False
+        if len(row) > 8 and row[8] is not None:
+            if isinstance(row[8], bool):
+                resolved_value = row[8]
+            else:
+                resolved_value = str(row[8]).strip().lower() in {"true", "1", "yes", "y"}
         return {
             "customer_account": DashboardDataService._normalize_account_number(row[0]) if len(row) > 0 else "",
             "subscriber_account": DashboardDataService._normalize_account_number(row[1]) if len(row) > 1 else "",
@@ -586,6 +592,8 @@ class DashboardDataService:
             "number_of_calls": int(row[4]) if len(row) > 4 and row[4] is not None else 0,
             "total_duration_minutes": float(row[5]) if len(row) > 5 and row[5] is not None else 0,
             "avg_duration_minutes": float(row[6]) if len(row) > 6 and row[6] is not None else 0,
+            "client_sentiment": str(row[7]).upper() if len(row) > 7 and row[7] is not None else "UNKNOWN",
+            "is_resolved": resolved_value,
         }
 
     @staticmethod
