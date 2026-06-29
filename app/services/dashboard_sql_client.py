@@ -387,6 +387,7 @@ class DashboardSqlClient:
         max_dynamic_params = SQL_SERVER_PARAMETER_LIMIT - max(fixed_params, 0)
         safe_batch_size = max(max_dynamic_params // max(parameter_multiplier, 1), 1)
         batch_size = min(max(self.batch_size, 1), safe_batch_size)
+            logger.info(f"_iter_batches: items={len(items)}, parameter_multiplier={parameter_multiplier}, fixed_params={fixed_params}, batch_size={batch_size}, safe_batch_size={safe_batch_size}")
         return [items[index:index + batch_size] for index in range(0, len(items), batch_size)]
 
     @staticmethod
