@@ -175,14 +175,11 @@ class DashboardSqlClient:
 
         customer_type_code = "COM" if customer_segment == "com" else "RES"
         rows: list[tuple[Any, ...]] = []
-        # SQL Server caps a single statement at 2100 parameters. This query binds
-        # accounts twice (SubscriberAccount and CustomerAccount) plus CustomerType,
-        # so keep batches under floor((2100 - 1) / 2) = 1049.
-        for batch in self._iter_batches(
-            sanitized_accounts,
-            parameter_multiplier=2,
-            fixed_params=1,
-        ):
+        # SQL Server is strict near 2100 parameters in some execution paths.
+        # Keep a conservative cap per batch to avoid boundary failures.
+        max_accounts_per_batch = 900
+        for start_index in range(0, len(sanitized_accounts), max_accounts_per_batch):
+            batch = sanitized_accounts[start_index:start_index + max_accounts_per_batch]
             placeholders = ", ".join("?" for _ in batch)
             query = (
                 "SELECT CustomerAccount, SubscriberAccount, CustomerType, MonthStart, NumberOfCalls, TotalDurationMinutes, AvgDurationMinutes, ClientSentiment, IsResolved "
