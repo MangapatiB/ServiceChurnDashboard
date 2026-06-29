@@ -773,6 +773,9 @@ textarea {
 }
 
 .refresh-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 120px;
   height: 32px;
   padding: 0 12px;
@@ -785,6 +788,7 @@ textarea {
   font-weight: 800;
   cursor: pointer;
   transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+  text-decoration: none;
 }
 
 .refresh-button:hover {
@@ -795,6 +799,20 @@ textarea {
 .refresh-button:disabled {
   opacity: 0.72;
   cursor: wait;
+}
+
+.refresh-button--disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
 }
 
 .kpi-grid,

@@ -91,12 +91,16 @@ def call_data_view():
         default=current_app.config["HIGH_RISK_LIMIT"],
         maximum=current_app.config["MAX_DASHBOARD_LIMIT"],
     )
+    page = normalize_limit(request.args.get("page"), default=1, minimum=1, maximum=100000)
+    page_size = normalize_limit(request.args.get("page_size"), default=100, minimum=1, maximum=500)
     customer_segment = normalize_customer_segment(request.args.get("segment"))
     with service.open_query_session() as query_session:
         call_data = service.get_call_data_records(
             location=location,
             limit=limit,
             customer_segment=customer_segment,
+            page=page,
+            page_size=page_size,
             query_session=query_session,
         )
         location_options = service.get_location_options(query_session=query_session)
@@ -109,6 +113,8 @@ def call_data_view():
         data_mode=current_app.config["DATA_SOURCE_MODE"],
         current_location=location,
         current_limit=limit,
+        current_page=call_data.get("meta", {}).get("page", page),
+        current_page_size=call_data.get("meta", {}).get("page_size", page_size),
         current_segment=customer_segment,
         max_dashboard_limit=current_app.config["MAX_DASHBOARD_LIMIT"],
     )

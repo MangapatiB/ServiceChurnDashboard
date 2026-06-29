@@ -40,6 +40,7 @@
                 </div>
             </div>
             <form class="dashboard-filters" method="get" action="{{ url_for('dashboard.call_data_view') }}">
+                <input type="hidden" name="page" value="1">
                 <label class="filter-field">
                     <span>Customer type</span>
                     <select name="segment">
@@ -60,6 +61,14 @@
                     <span>Limit</span>
                     <input name="limit" type="number" min="1" max="{{ max_dashboard_limit }}" value="{{ current_limit }}">
                 </label>
+                <label class="filter-field">
+                    <span>Rows per page</span>
+                    <select name="page_size">
+                        <option value="50" {% if current_page_size == 50 %}selected{% endif %}>50</option>
+                        <option value="100" {% if current_page_size == 100 %}selected{% endif %}>100</option>
+                        <option value="250" {% if current_page_size == 250 %}selected{% endif %}>250</option>
+                    </select>
+                </label>
                 <button class="refresh-button" type="submit">Apply filters</button>
             </form>
             <p class="panel__description panel__description--compact">{{ call_data.meta.message }}</p>
@@ -70,7 +79,7 @@
                 <div>
                     <p class="section-kicker">Call data view</p>
                     <h2>Call data records</h2>
-                    <p class="panel__description">Showing detailed call records for {{ call_data.meta.location }} · {{ 'Business' if current_segment == 'com' else 'Residential' }} · limit {{ current_limit }}.</p>
+                    <p class="panel__description">Showing records {{ call_data.meta.page_row_start }}-{{ call_data.meta.page_row_end }} of {{ call_data.meta.total_records }} for {{ call_data.meta.location }} · {{ 'Business' if current_segment == 'com' else 'Residential' }} · limit {{ current_limit }}.</p>
                 </div>
             </div>
             <div class="table-wrap">
@@ -129,6 +138,19 @@
                         {% endif %}
                     </tbody>
                 </table>
+            </div>
+            <div class="pagination-row" aria-label="Call data pagination">
+                <a
+                    class="refresh-button {% if not call_data.meta.has_prev %}refresh-button--disabled{% endif %}"
+                    href="{% if call_data.meta.has_prev %}{{ url_for('dashboard.call_data_view', segment=current_segment, location=current_location, limit=current_limit, page=call_data.meta.page - 1, page_size=current_page_size) }}{% else %}#{% endif %}"
+                    {% if not call_data.meta.has_prev %}aria-disabled="true" tabindex="-1"{% endif %}
+                >Previous</a>
+                <p class="panel__description panel__description--compact">Page {{ call_data.meta.page }} of {{ call_data.meta.total_pages }}</p>
+                <a
+                    class="refresh-button {% if not call_data.meta.has_next %}refresh-button--disabled{% endif %}"
+                    href="{% if call_data.meta.has_next %}{{ url_for('dashboard.call_data_view', segment=current_segment, location=current_location, limit=current_limit, page=call_data.meta.page + 1, page_size=current_page_size) }}{% else %}#{% endif %}"
+                    {% if not call_data.meta.has_next %}aria-disabled="true" tabindex="-1"{% endif %}
+                >Next</a>
             </div>
         </section>
     </main>

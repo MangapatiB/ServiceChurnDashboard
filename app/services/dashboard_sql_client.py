@@ -173,22 +173,100 @@ class DashboardSqlClient:
         if not sanitized_accounts:
             return []
 
+        account_filter_csv = self._build_account_filter_csv(sanitized_accounts)
+        if not account_filter_csv:
+            return []
+
         customer_type_code = "COM" if customer_segment == "com" else "RES"
-        rows: list[tuple[Any, ...]] = []
-        # SQL Server is strict near 2100 parameters in some execution paths.
-        # Keep a conservative cap per batch to avoid boundary failures.
-        max_accounts_per_batch = 900
-        for start_index in range(0, len(sanitized_accounts), max_accounts_per_batch):
-            batch = sanitized_accounts[start_index:start_index + max_accounts_per_batch]
-            placeholders = ", ".join("?" for _ in batch)
-            query = (
-                "SELECT CustomerAccount, SubscriberAccount, CustomerType, MonthStart, NumberOfCalls, TotalDurationMinutes, AvgDurationMinutes, ClientSentiment, IsResolved "
-                f"FROM {self._qualified_table(self.call_records_table)} "
-                f"WHERE CustomerType = ? AND (SubscriberAccount IN ({placeholders}) OR CustomerAccount IN ({placeholders})) "
-                "ORDER BY MonthStart DESC, NumberOfCalls DESC"
-            )
-            rows.extend(self._fetch_rows(query, [customer_type_code, *batch, *batch], query_session=query_session))
-        return rows
+        query = (
+            "WITH account_filter AS ("
+            "SELECT LTRIM(RTRIM(value)) AS account FROM STRING_SPLIT(?, ',')"
+            ") "
+            "SELECT CustomerAccount, SubscriberAccount, CustomerType, MonthStart, NumberOfCalls, TotalDurationMinutes, AvgDurationMinutes, ClientSentiment, IsResolved "
+            f"FROM {self._qualified_table(self.call_records_table)} r "
+            "WHERE CustomerType = ? "
+            "AND EXISTS ("
+            "SELECT 1 FROM account_filter af "
+            "WHERE af.account = r.SubscriberAccount OR af.account = r.CustomerAccount"
+            ") "
+            "ORDER BY MonthStart DESC, NumberOfCalls DESC"
+        )
+        return self._fetch_rows(query, [account_filter_csv, customer_type_code], query_session=query_session)
+
+    def count_call_record_rows(
+        self,
+        account_numbers: list[str],
+        customer_segment: str,
+        query_session: DashboardSqlQuerySession | None = None,
+    ) -> int:
+        sanitized_accounts = self._sanitize_string_keys(account_numbers)
+        if not sanitized_accounts:
+            return 0
+
+        account_filter_csv = self._build_account_filter_csv(sanitized_accounts)
+        if not account_filter_csv:
+            return 0
+
+        customer_type_code = "COM" if customer_segment == "com" else "RES"
+        query = (
+            "WITH account_filter AS ("
+            "SELECT LTRIM(RTRIM(value)) AS account FROM STRING_SPLIT(?, ',')"
+            ") "
+            "SELECT COUNT_BIG(1) "
+            f"FROM {self._qualified_table(self.call_records_table)} r "
+            "WHERE CustomerType = ? "
+            "AND EXISTS ("
+            "SELECT 1 FROM account_filter af "
+            "WHERE af.account = r.SubscriberAccount OR af.account = r.CustomerAccount"
+            ")"
+        )
+        rows = self._fetch_rows(query, [account_filter_csv, customer_type_code], query_session=query_session)
+        if not rows or not rows[0]:
+            return 0
+        try:
+            return int(rows[0][0] or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    def fetch_call_record_page_rows(
+        self,
+        account_numbers: list[str],
+        customer_segment: str,
+        page: int,
+        page_size: int,
+        query_session: DashboardSqlQuerySession | None = None,
+    ) -> list[tuple[Any, ...]]:
+        sanitized_accounts = self._sanitize_string_keys(account_numbers)
+        if not sanitized_accounts:
+            return []
+
+        account_filter_csv = self._build_account_filter_csv(sanitized_accounts)
+        if not account_filter_csv:
+            return []
+
+        safe_page = max(int(page or 1), 1)
+        safe_page_size = max(int(page_size or 100), 1)
+        offset_rows = (safe_page - 1) * safe_page_size
+        customer_type_code = "COM" if customer_segment == "com" else "RES"
+        query = (
+            "WITH account_filter AS ("
+            "SELECT LTRIM(RTRIM(value)) AS account FROM STRING_SPLIT(?, ',')"
+            ") "
+            "SELECT CustomerAccount, SubscriberAccount, CustomerType, MonthStart, NumberOfCalls, TotalDurationMinutes, AvgDurationMinutes, ClientSentiment, IsResolved "
+            f"FROM {self._qualified_table(self.call_records_table)} r "
+            "WHERE CustomerType = ? "
+            "AND EXISTS ("
+            "SELECT 1 FROM account_filter af "
+            "WHERE af.account = r.SubscriberAccount OR af.account = r.CustomerAccount"
+            ") "
+            "ORDER BY MonthStart DESC, NumberOfCalls DESC "
+            "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY"
+        )
+        return self._fetch_rows(
+            query,
+            [account_filter_csv, customer_type_code, offset_rows, safe_page_size],
+            query_session=query_session,
+        )
 
     def fetch_account_mac_map(
         self,
@@ -397,6 +475,12 @@ class DashboardSqlClient:
             seen_values.add(normalized_value)
             sanitized_values.append(normalized_value)
         return sanitized_values
+
+    @staticmethod
+    def _build_account_filter_csv(values: list[str]) -> str:
+        # STRING_SPLIT delimiter is comma, so strip commas from keys for safety.
+        sanitized = [str(value or "").replace(",", "").strip() for value in values if str(value or "").strip()]
+        return ",".join(sanitized)
 
     @staticmethod
     def normalize_mac_key(value: Any) -> str:

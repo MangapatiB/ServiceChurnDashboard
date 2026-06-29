@@ -130,12 +130,16 @@ class DashboardDataService:
         location: str = "",
         limit: int | None = None,
         customer_segment: str = "res",
+        page: int | None = None,
+        page_size: int | None = None,
         query_session=None,
     ) -> dict[str, Any]:
         mode = self.config.get("DATA_SOURCE_MODE", "mock")
         safe_limit = normalize_limit(limit, default=self.config.get("HIGH_RISK_LIMIT", 12))
         safe_location = sanitize_location(location)
         safe_segment = normalize_customer_segment(customer_segment)
+        safe_page = normalize_limit(page, default=1, minimum=1, maximum=100000)
+        safe_page_size = normalize_limit(page_size, default=100, minimum=1, maximum=500)
 
         if mode != "live":
             return {
@@ -145,6 +149,14 @@ class DashboardDataService:
                     "location": safe_location or "ALL LOCATIONS",
                     "limit": safe_limit,
                     "customer_segment": safe_segment,
+                    "page": safe_page,
+                    "page_size": safe_page_size,
+                    "total_records": 0,
+                    "total_pages": 1,
+                    "has_prev": False,
+                    "has_next": False,
+                    "page_row_start": 0,
+                    "page_row_end": 0,
                     "message": "Detailed call records are only available in live mode.",
                 },
                 "rows": [],
@@ -157,11 +169,22 @@ class DashboardDataService:
                 subscriber_account_numbers = [row[1] for row in truckroll_rows if len(row) > 1]
                 churn_rows = self.client.fetch_churn_rows(subscriber_account_numbers, safe_segment, query_session=session)
                 displayed_account_numbers = self._select_displayed_account_numbers(truckroll_rows, churn_rows, safe_limit)
-                call_record_rows = self.client.fetch_call_record_rows(
+                total_records = self.client.count_call_record_rows(
                     displayed_account_numbers,
                     safe_segment,
                     query_session=session,
                 )
+                total_pages = max((total_records + safe_page_size - 1) // safe_page_size, 1)
+                effective_page = min(safe_page, total_pages)
+                call_record_rows = self.client.fetch_call_record_page_rows(
+                    displayed_account_numbers,
+                    safe_segment,
+                    page=effective_page,
+                    page_size=safe_page_size,
+                    query_session=session,
+                )
+            page_row_start = ((effective_page - 1) * safe_page_size + 1) if total_records else 0
+            page_row_end = min(effective_page * safe_page_size, total_records) if total_records else 0
             return {
                 "meta": {
                     "source": "live",
@@ -169,6 +192,14 @@ class DashboardDataService:
                     "location": safe_location or "ALL LOCATIONS",
                     "limit": safe_limit,
                     "customer_segment": safe_segment,
+                    "page": effective_page,
+                    "page_size": safe_page_size,
+                    "total_records": total_records,
+                    "total_pages": total_pages,
+                    "has_prev": effective_page > 1,
+                    "has_next": effective_page < total_pages,
+                    "page_row_start": page_row_start,
+                    "page_row_end": page_row_end,
                     "message": "Detailed live call records from dashboard SQL tables for the displayed watchlist accounts.",
                 },
                 "rows": [self._coerce_call_record_row(row) for row in call_record_rows],
@@ -187,6 +218,14 @@ class DashboardDataService:
                     "location": safe_location or "ALL LOCATIONS",
                     "limit": safe_limit,
                     "customer_segment": safe_segment,
+                    "page": safe_page,
+                    "page_size": safe_page_size,
+                    "total_records": 0,
+                    "total_pages": 1,
+                    "has_prev": False,
+                    "has_next": False,
+                    "page_row_start": 0,
+                    "page_row_end": 0,
                     "message": f"Live call data records table query failed: {exc}",
                 },
                 "rows": [],
