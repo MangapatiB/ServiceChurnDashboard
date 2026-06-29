@@ -10,11 +10,16 @@ WORKDIR /app
 
 USER 0
 
-RUN microdnf -y update \
-    && microdnf -y install curl gnupg2 ca-certificates gcc gcc-c++ make unixODBC unixODBC-devel \
-    && curl -fsSL https://packages.microsoft.com/config/rhel/9/prod.repo -o /etc/yum.repos.d/microsoft-prod.repo \
-    && ACCEPT_EULA=Y microdnf -y install msodbcsql18 \
-    && microdnf clean all
+RUN set -eux; \
+    if command -v dnf >/dev/null 2>&1; then PM=dnf; \
+    elif command -v yum >/dev/null 2>&1; then PM=yum; \
+    elif command -v microdnf >/dev/null 2>&1; then PM=microdnf; \
+    else echo "No supported package manager found"; exit 1; fi; \
+    $PM -y update; \
+    $PM -y install curl gnupg2 ca-certificates gcc gcc-c++ make unixODBC unixODBC-devel; \
+    curl -fsSL https://packages.microsoft.com/config/rhel/9/prod.repo -o /etc/yum.repos.d/microsoft-prod.repo; \
+    ACCEPT_EULA=Y $PM -y install msodbcsql18; \
+    ($PM clean all || true)
 
 COPY requirements.txt ./
 
