@@ -180,7 +180,7 @@ class DashboardSqlClient:
         customer_type_code = "COM" if customer_segment == "com" else "RES"
         query = (
             "WITH account_filter AS ("
-            "SELECT LTRIM(RTRIM(value)) AS account FROM STRING_SPLIT(?, ',')"
+            "SELECT LTRIM(RTRIM(value)) AS account FROM STRING_SPLIT(CAST(? AS nvarchar(MAX)), ',')"
             ") "
             "SELECT CustomerAccount, SubscriberAccount, CustomerType, MonthStart, NumberOfCalls, TotalDurationMinutes, AvgDurationMinutes, ClientSentiment, IsResolved "
             f"FROM {self._qualified_table(self.call_records_table)} r "
@@ -210,7 +210,7 @@ class DashboardSqlClient:
         customer_type_code = "COM" if customer_segment == "com" else "RES"
         query = (
             "WITH account_filter AS ("
-            "SELECT LTRIM(RTRIM(value)) AS account FROM STRING_SPLIT(?, ',')"
+            "SELECT LTRIM(RTRIM(value)) AS account FROM STRING_SPLIT(CAST(? AS nvarchar(MAX)), ',')"
             ") "
             "SELECT COUNT_BIG(1) "
             f"FROM {self._qualified_table(self.call_records_table)} r "
@@ -250,7 +250,7 @@ class DashboardSqlClient:
         customer_type_code = "COM" if customer_segment == "com" else "RES"
         query = (
             "WITH account_filter AS ("
-            "SELECT LTRIM(RTRIM(value)) AS account FROM STRING_SPLIT(?, ',')"
+            "SELECT LTRIM(RTRIM(value)) AS account FROM STRING_SPLIT(CAST(? AS nvarchar(MAX)), ',')"
             ") "
             "SELECT CustomerAccount, SubscriberAccount, CustomerType, MonthStart, NumberOfCalls, TotalDurationMinutes, AvgDurationMinutes, ClientSentiment, IsResolved "
             f"FROM {self._qualified_table(self.call_records_table)} r "
