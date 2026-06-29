@@ -169,18 +169,15 @@ class DashboardDataService:
                 subscriber_account_numbers = [row[1] for row in truckroll_rows if len(row) > 1]
                 churn_rows = self.client.fetch_churn_rows(subscriber_account_numbers, safe_segment, query_session=session)
                 displayed_account_numbers = self._select_displayed_account_numbers(truckroll_rows, churn_rows, safe_limit)
-                total_records = self.client.count_call_record_rows(
-                    displayed_account_numbers,
-                    safe_segment,
-                    query_session=session,
-                )
+                total_records = len(displayed_account_numbers)
                 total_pages = max((total_records + safe_page_size - 1) // safe_page_size, 1)
                 effective_page = min(safe_page, total_pages)
-                call_record_rows = self.client.fetch_call_record_page_rows(
-                    displayed_account_numbers,
+                account_start = (effective_page - 1) * safe_page_size
+                account_end = account_start + safe_page_size
+                paged_account_numbers = displayed_account_numbers[account_start:account_end]
+                call_record_rows = self.client.fetch_call_record_rows(
+                    paged_account_numbers,
                     safe_segment,
-                    page=effective_page,
-                    page_size=safe_page_size,
                     query_session=session,
                 )
             page_row_start = ((effective_page - 1) * safe_page_size + 1) if total_records else 0

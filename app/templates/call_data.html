@@ -62,7 +62,7 @@
                     <input name="limit" type="number" min="1" max="{{ max_dashboard_limit }}" value="{{ current_limit }}">
                 </label>
                 <label class="filter-field">
-                    <span>Rows per page</span>
+                    <span>Accounts per page</span>
                     <select name="page_size">
                         <option value="50" {% if current_page_size == 50 %}selected{% endif %}>50</option>
                         <option value="100" {% if current_page_size == 100 %}selected{% endif %}>100</option>
@@ -79,7 +79,7 @@
                 <div>
                     <p class="section-kicker">Call data view</p>
                     <h2>Call data records</h2>
-                    <p class="panel__description">Showing records {{ call_data.meta.page_row_start }}-{{ call_data.meta.page_row_end }} of {{ call_data.meta.total_records }} for {{ call_data.meta.location }} · {{ 'Business' if current_segment == 'com' else 'Residential' }} · limit {{ current_limit }}.</p>
+                    <p class="panel__description">Showing accounts {{ call_data.meta.page_row_start }}-{{ call_data.meta.page_row_end }} of {{ call_data.meta.total_records }} (returned records: {{ call_data.rows|length }}) for {{ call_data.meta.location }} · {{ 'Business' if current_segment == 'com' else 'Residential' }} · limit {{ current_limit }}.</p>
                 </div>
             </div>
             <div class="table-wrap">
