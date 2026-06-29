@@ -99,8 +99,25 @@
                                 <td>{{ item.number_of_calls }}</td>
                                 <td>{{ '%.2f'|format(item.total_duration_minutes) }}</td>
                                 <td>{{ '%.2f'|format(item.avg_duration_minutes) }}</td>
-                                <td>{{ item.client_sentiment }}</td>
-                                <td>{% if item.is_resolved %}Yes{% else %}No{% endif %}</td>
+                                <td>
+                                    {% set sentiment = item.client_sentiment|upper %}
+                                    {% if sentiment == 'POSITIVE' %}
+                                        <span class="badge badge--good">{{ item.client_sentiment }}</span>
+                                    {% elif sentiment == 'NEGATIVE' %}
+                                        <span class="badge badge--risk">{{ item.client_sentiment }}</span>
+                                    {% elif sentiment == 'NEUTRAL' %}
+                                        <span class="badge badge--neutral">{{ item.client_sentiment }}</span>
+                                    {% else %}
+                                        <span class="badge badge--neutral">{{ item.client_sentiment }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.is_resolved %}
+                                        <span class="badge badge--good">Yes</span>
+                                    {% else %}
+                                        <span class="badge badge--risk">No</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         {% else %}
