@@ -182,10 +182,14 @@ class DashboardSqlClient:
             query = (
                 "SELECT CustomerAccount, SubscriberAccount, CustomerType, MonthStart, NumberOfCalls, TotalDurationMinutes, AvgDurationMinutes, ClientSentiment, IsResolved "
                 f"FROM {self._qualified_table(self.call_records_table)} "
-                f"WHERE CustomerType = ? AND (SubscriberAccount IN ({placeholders}) OR CustomerAccount IN ({placeholders})) "
+                f"WHERE CustomerType = ? AND SubscriberAccount IN ({placeholders}) "
+                "UNION "
+                "SELECT CustomerAccount, SubscriberAccount, CustomerType, MonthStart, NumberOfCalls, TotalDurationMinutes, AvgDurationMinutes, ClientSentiment, IsResolved "
+                f"FROM {self._qualified_table(self.call_records_table)} "
+                f"WHERE CustomerType = ? AND CustomerAccount IN ({placeholders}) "
                 "ORDER BY MonthStart DESC, NumberOfCalls DESC"
             )
-            rows.extend(self._fetch_rows(query, [customer_type_code, *batch, *batch], query_session=query_session))
+            rows.extend(self._fetch_rows(query, [customer_type_code, *batch, customer_type_code, *batch], query_session=query_session))
         return rows
 
     def count_call_record_rows(
@@ -243,10 +247,14 @@ class DashboardSqlClient:
             query = (
                 "SELECT CustomerAccount, SubscriberAccount, CustomerType, MonthStart, NumberOfCalls, TotalDurationMinutes, AvgDurationMinutes, ClientSentiment, IsResolved "
                 f"FROM {self._qualified_table(self.call_records_table)} "
-                f"WHERE CustomerType = ? AND (SubscriberAccount IN ({placeholders}) OR CustomerAccount IN ({placeholders})) "
+                f"WHERE CustomerType = ? AND SubscriberAccount IN ({placeholders}) "
+                "UNION "
+                "SELECT CustomerAccount, SubscriberAccount, CustomerType, MonthStart, NumberOfCalls, TotalDurationMinutes, AvgDurationMinutes, ClientSentiment, IsResolved "
+                f"FROM {self._qualified_table(self.call_records_table)} "
+                f"WHERE CustomerType = ? AND CustomerAccount IN ({placeholders}) "
                 "ORDER BY MonthStart DESC, NumberOfCalls DESC"
             )
-            all_rows.extend(self._fetch_rows(query, [customer_type_code, *batch, *batch], query_session=query_session))
+            all_rows.extend(self._fetch_rows(query, [customer_type_code, *batch, customer_type_code, *batch], query_session=query_session))
         # Global sort across batches then apply page slice.
         all_rows.sort(key=lambda r: (r[3] or "", -(r[4] or 0)), reverse=True)
         return all_rows[offset_rows: offset_rows + safe_page_size]
