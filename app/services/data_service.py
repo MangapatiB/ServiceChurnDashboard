@@ -139,7 +139,12 @@ class DashboardDataService:
         safe_location = sanitize_location(location)
         safe_segment = normalize_customer_segment(customer_segment)
         safe_page = normalize_limit(page, default=1, minimum=1, maximum=100000)
-        safe_page_size = normalize_limit(page_size, default=100, minimum=1, maximum=500)
+        safe_page_size = normalize_limit(
+            page_size,
+            default=100,
+            minimum=1,
+            maximum=self.config.get("MAX_DASHBOARD_LIMIT", 10000),
+        )
 
         if mode != "live":
             return {
