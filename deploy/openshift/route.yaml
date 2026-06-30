@@ -3,6 +3,8 @@ kind: Route
 metadata:
   name: service-churn-dashboard
   namespace: service-churn-dev
+  annotations:
+    haproxy.router.openshift.io/timeout: 300s
 spec:
   to:
     kind: Service

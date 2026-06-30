@@ -53,7 +53,7 @@ data:
   DASHBOARD_SQL_MODEM_HEALTH_TABLE: "service_churn_modem_health_latest"
 
   MODEM_HEALTH_REFRESH_SECONDS: "3600"
-  MODEM_SQL_SERVER: "sql-productdbu.uat.corp.cableone.net"
+  MODEM_SQL_SERVER: "sql-product"
   MODEM_SQL_PORT: "1433"
   MODEM_SQL_TIMEOUT_SECONDS: "5"
   MODEM_SQL_DATABASE: "newbacondata"
@@ -163,6 +163,8 @@ kind: Route
 metadata:
   name: service-churn-dashboard
   namespace: service-churn-dev
+  annotations:
+    haproxy.router.openshift.io/timeout: 300s
 spec:
   to:
     kind: Service
