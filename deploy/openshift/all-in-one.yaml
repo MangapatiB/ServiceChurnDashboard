@@ -35,7 +35,7 @@ data:
   HIGH_RISK_LIMIT: "12"
   MAX_DASHBOARD_LIMIT: "10000"
 
-  DASHBOARD_SQL_SERVER: "sql-uatproduct.uat.corp.cableone.net"
+  DASHBOARD_SQL_SERVER: "sql-product.corp.cableone.net"
   DASHBOARD_SQL_PORT: "1433"
   DASHBOARD_SQL_TIMEOUT_SECONDS: "15"
   DASHBOARD_SQL_BATCH_SIZE: "2000"
@@ -53,7 +53,7 @@ data:
   DASHBOARD_SQL_MODEM_HEALTH_TABLE: "service_churn_modem_health_latest"
 
   MODEM_HEALTH_REFRESH_SECONDS: "3600"
-  MODEM_SQL_SERVER: "sql-product"
+  MODEM_SQL_SERVER: "sql-product.corp.cableone.net"
   MODEM_SQL_PORT: "1433"
   MODEM_SQL_TIMEOUT_SECONDS: "5"
   MODEM_SQL_DATABASE: "newbacondata"
