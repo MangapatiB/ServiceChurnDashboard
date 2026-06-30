@@ -92,7 +92,12 @@ def call_data_view():
         maximum=current_app.config["MAX_DASHBOARD_LIMIT"],
     )
     page = normalize_limit(request.args.get("page"), default=1, minimum=1, maximum=100000)
-    page_size = normalize_limit(request.args.get("page_size"), default=100, minimum=1, maximum=500)
+    page_size = normalize_limit(
+        request.args.get("page_size"),
+        default=100,
+        minimum=1,
+        maximum=current_app.config["MAX_DASHBOARD_LIMIT"],
+    )
     customer_segment = normalize_customer_segment(request.args.get("segment"))
     with service.open_query_session() as query_session:
         call_data = service.get_call_data_records(

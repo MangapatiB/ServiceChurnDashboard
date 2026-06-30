@@ -67,6 +67,10 @@
                         <option value="50" {% if current_page_size == 50 %}selected{% endif %}>50</option>
                         <option value="100" {% if current_page_size == 100 %}selected{% endif %}>100</option>
                         <option value="250" {% if current_page_size == 250 %}selected{% endif %}>250</option>
+                        <option value="1000" {% if current_page_size == 1000 %}selected{% endif %}>1000</option>
+                        <option value="2500" {% if current_page_size == 2500 %}selected{% endif %}>2500</option>
+                        <option value="5000" {% if current_page_size == 5000 %}selected{% endif %}>5000</option>
+                        <option value="10000" {% if current_page_size == 10000 %}selected{% endif %}>10000</option>
                     </select>
                 </label>
                 <button class="refresh-button" type="submit">Apply filters</button>
