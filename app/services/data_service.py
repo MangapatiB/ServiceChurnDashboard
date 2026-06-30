@@ -166,7 +166,10 @@ class DashboardDataService:
             session_context = self.client.open_session() if query_session is None else nullcontext(query_session)
             with session_context as session:
                 truckroll_rows = self.client.fetch_truckroll_rows(safe_location, safe_limit, query_session=session)
-                displayed_account_numbers = self._select_call_data_account_numbers(truckroll_rows, safe_limit)
+                subscriber_account_numbers = [row[1] for row in truckroll_rows if len(row) > 1]
+                # For call-data pagination, rely on truckroll watchlist order directly to avoid
+                # the extra churn-table query that adds significant latency at high limits.
+                displayed_account_numbers = self._dedupe_preserving_order(subscriber_account_numbers)
                 total_records = len(displayed_account_numbers)
                 total_pages = max((total_records + safe_page_size - 1) // safe_page_size, 1)
                 effective_page = min(safe_page, total_pages)
@@ -227,16 +230,15 @@ class DashboardDataService:
             }
 
     @staticmethod
-    def _select_call_data_account_numbers(truckroll_rows: list[Any], limit: int) -> list[str]:
-        selected_accounts: list[str] = []
-        seen_accounts: set[str] = set()
-        for row in truckroll_rows[:limit]:
-            account_number = DashboardDataService._normalize_account_number(row[1]) if len(row) > 1 else ""
-            if not account_number or account_number in seen_accounts:
+    def _dedupe_preserving_order(values: list[str]) -> list[str]:
+        seen: set[str] = set()
+        ordered_values: list[str] = []
+        for value in values:
+            if not value or value in seen:
                 continue
-            seen_accounts.add(account_number)
-            selected_accounts.append(account_number)
-        return selected_accounts
+            seen.add(value)
+            ordered_values.append(value)
+        return ordered_values
 
     def _build_live_snapshot(
         self,
