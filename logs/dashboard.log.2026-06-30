@@ -1,0 +1,51 @@
+2026-06-30 19:22:27 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 21:21:52 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 21:21:53 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=100 segment=res
+2026-06-30 21:22:18 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=3
+2026-06-30 21:22:21 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-30 21:22:51 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 21:23:01 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=100 segment=res
+2026-06-30 21:23:18 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=3
+2026-06-30 21:23:18 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-30 21:23:28 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 21:23:58 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 21:27:31 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 21:27:32 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=100 segment=res
+2026-06-30 21:27:46 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=3
+2026-06-30 21:28:13 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=133
+2026-06-30 21:41:07 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 21:41:07 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-30 21:41:11 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-30 21:41:34 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=135
+2026-06-30 21:42:13 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 21:42:14 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-30 21:42:16 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-30 21:42:20 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 22:03:38 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 22:03:38 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=100 segment=res
+2026-06-30 22:03:56 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=3
+2026-06-30 22:03:56 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=100 segment=res
+2026-06-30 22:03:56 | INFO | app.services.data_service | Serving dashboard snapshot from cache. location=ALL LOCATIONS limit=100 segment=res
+2026-06-30 22:04:10 | INFO | app.services.data_service | Serving call-data from cache. location=ALL LOCATIONS limit=100 segment=res page=1 page_size=100
+2026-06-30 22:17:37 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 22:17:38 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-30 22:17:40 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-30 22:24:21 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 22:24:22 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=12 segment=res
+2026-06-30 22:24:24 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-30 22:24:25 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=100 segment=res
+2026-06-30 22:24:39 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=2
+2026-06-30 22:24:40 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=1000 segment=res
+2026-06-30 22:26:58 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=26
+2026-06-30 23:25:28 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 23:25:28 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-06-30 23:40:10 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 23:40:36 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 23:47:31 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 23:48:06 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-06-30 23:48:06 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-06-30 23:53:24 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-06-30 23:53:24 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-06-30 23:53:25 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-06-30 23:53:26 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-06-30 23:53:30 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0

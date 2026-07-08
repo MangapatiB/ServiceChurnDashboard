@@ -18,6 +18,9 @@
             currentLocation: {{ current_location|tojson }},
             currentLimit: {{ current_limit|tojson }},
             currentSegment: {{ current_segment|tojson }},
+            currentCustomerPage: {{ current_customer_page|default(1)|tojson }},
+            currentCustomerPageSize: {{ current_customer_page_size|default(15)|tojson }},
+            currentCustomerSort: {{ current_customer_sort|default('desc')|tojson }},
             maxDashboardLimit: {{ max_dashboard_limit|tojson }}
         };
     </script>

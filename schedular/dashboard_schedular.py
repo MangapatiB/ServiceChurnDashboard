@@ -985,7 +985,7 @@ def fetch_account_mac_rows():
 
 
 def fetch_modem_rows():
-    source_sql = sql_connect("SOURCE_SQL")
+    source_sql = sql_connect(get_modem_source_prefix())
     try:
         source_cursor = source_sql.cursor()
         source_cursor.execute(SOURCE_MODEM_QUERY)
@@ -1362,12 +1362,37 @@ def sql_connect(prefix):
     return pyodbc.connect(conn_str, autocommit=False)
 
 
+def get_modem_source_prefix():
+    if os.getenv("MODEM_SQL_SERVER"):
+        return "MODEM_SQL"
+    return "SOURCE_SQL"
+
+
+def normalize_server_host(value):
+    if not value:
+        return ""
+    cleaned = value.strip().lower()
+    if "," in cleaned:
+        cleaned = cleaned.split(",", 1)[0]
+    if "\\" in cleaned:
+        cleaned = cleaned.split("\\", 1)[0]
+    if ":" in cleaned:
+        cleaned = cleaned.split(":", 1)[0]
+    return cleaned
+
+
 def source_and_target_share_server():
     global SOURCE_AND_TARGET_SHARE_SERVER
     if SOURCE_AND_TARGET_SHARE_SERVER is None:
-        SOURCE_AND_TARGET_SHARE_SERVER = (
-            os.getenv("SOURCE_SQL_SERVER") == os.getenv("TARGET_SQL_SERVER")
-        )
+        modem_server = normalize_server_host(os.getenv(f"{get_modem_source_prefix()}_SERVER"))
+        target_server = normalize_server_host(os.getenv("TARGET_SQL_SERVER"))
+
+        SOURCE_AND_TARGET_SHARE_SERVER = False
+        if modem_server and target_server:
+            SOURCE_AND_TARGET_SHARE_SERVER = (
+                modem_server == target_server
+                or modem_server.split(".", 1)[0] == target_server.split(".", 1)[0]
+            )
     return SOURCE_AND_TARGET_SHARE_SERVER
 
 
@@ -2164,7 +2189,7 @@ def refresh_once():
                 )
             else:
                 if source_sql is None:
-                    source_sql = sql_connect("SOURCE_SQL")
+                    source_sql = sql_connect(get_modem_source_prefix())
                 modem_source_fingerprint = get_sql_server_source_fingerprint(
                     source_sql.cursor(),
                     SOURCE_MODEM_QUERY,

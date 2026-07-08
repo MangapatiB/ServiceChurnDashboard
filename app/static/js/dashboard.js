@@ -17,13 +17,29 @@ const state = {
   location: bootstrap.currentLocation || "",
   limit: bootstrap.currentLimit || 12,
   maxLimit: Number(bootstrap.maxDashboardLimit || 1000),
-  customerPage: 0,
-  customerPageSize: 15,
-  customerSort: customerSortInput?.value || "desc",
+  customerPage: Math.max(Number(bootstrap.currentCustomerPage || 1) - 1, 0),
+  customerPageSize: Number(bootstrap.currentCustomerPageSize || 15),
+  customerSort: bootstrap.currentCustomerSort || customerSortInput?.value || "desc",
   snapshot: bootstrap.initialSnapshot || null,
   refreshTimerId: null,
   isFetching: false,
+  pageCache: new Map(),
 };
+
+function buildSnapshotCacheKey(pageIndex = state.customerPage) {
+  return JSON.stringify({
+    segment: state.segment,
+    location: state.location,
+    limit: clampLimit(state.limit),
+    customer_page: Number(pageIndex) + 1,
+    customer_page_size: Number(state.customerPageSize),
+    customer_sort: state.customerSort,
+  });
+}
+
+function clearSnapshotCache() {
+  state.pageCache.clear();
+}
 
 function clampLimit(value) {
   const parsed = Number(value || state.limit || 12);
@@ -410,26 +426,25 @@ function renderCustomers(items) {
     return;
   }
 
-  const totalItems = sortedItems.length;
-  const pageSize = state.customerPageSize;
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  state.customerPage = Math.min(state.customerPage, totalPages - 1);
-  const startIndex = state.customerPage * pageSize;
-  const pageItems = sortedItems.slice(startIndex, startIndex + pageSize);
-  const endIndex = Math.min(startIndex + pageItems.length, totalItems);
-  const currentPage = state.customerPage + 1;
+  const meta = state.snapshot?.meta || {};
+  const totalItems = Number(meta.customer_total_records || sortedItems.length || 0);
+  const totalPages = Math.max(Number(meta.customer_total_pages || 1), 1);
+  const currentPage = Math.max(Number(meta.customer_page || (state.customerPage + 1)), 1);
+  state.customerPage = currentPage - 1;
+  const startIndex = Number(meta.customer_row_start || 0);
+  const endIndex = Number(meta.customer_row_end || 0);
 
   if (customerPaginationSummary) {
-    customerPaginationSummary.textContent = `Showing ${startIndex + 1}-${endIndex} of ${totalItems} accounts · Page ${currentPage} of ${totalPages}`;
+    customerPaginationSummary.textContent = `Showing ${startIndex}-${endIndex} of ${totalItems} accounts · Page ${currentPage} of ${totalPages}`;
   }
   if (customerPrevButton) {
-    customerPrevButton.disabled = state.customerPage === 0;
+    customerPrevButton.disabled = currentPage <= 1;
   }
   if (customerNextButton) {
-    customerNextButton.disabled = state.customerPage >= totalPages - 1;
+    customerNextButton.disabled = currentPage >= totalPages;
   }
 
-  container.innerHTML = pageItems.map((item) => `
+  container.innerHTML = sortedItems.map((item) => `
     <tr>
       <td class="customer-col-cell customer-col-cell--id"><span class="customer-cell customer-cell--id">${escapeHtml(item.customer_id)}</span></td>
       <td class="customer-col-cell customer-col-cell--geo"><span class="customer-cell customer-cell--geo">${escapeHtml(item.geo)}</span></td>
@@ -456,13 +471,27 @@ function render(snapshot) {
   renderCustomers(snapshot.high_risk_customers || []);
 }
 
-async function fetchSnapshot() {
+async function fetchSnapshot(options = {}) {
+  const {
+    showFilterLoading = true,
+    allowCachedPage = true,
+  } = options;
+
+  const cacheKey = buildSnapshotCacheKey();
+  if (allowCachedPage && state.pageCache.has(cacheKey)) {
+    state.snapshot = state.pageCache.get(cacheKey);
+    const responsePage = Math.max(Number(state.snapshot?.meta?.customer_page || (state.customerPage + 1)), 1);
+    state.customerPage = responsePage - 1;
+    render(state.snapshot);
+    return;
+  }
+
   if (state.isFetching) {
     return;
   }
   state.isFetching = true;
   const originalLabel = refreshButton?.textContent || "Apply filters";
-  if (refreshButton) {
+  if (refreshButton && showFilterLoading) {
     refreshButton.disabled = true;
     refreshButton.textContent = "Updating...";
   }
@@ -471,17 +500,25 @@ async function fetchSnapshot() {
       segment: state.segment,
       location: state.location,
       limit: String(clampLimit(state.limit)),
+      customer_page: String(state.customerPage + 1),
+      customer_page_size: String(state.customerPageSize),
+      customer_sort: state.customerSort,
     });
     const response = await fetch(`${state.endpoint}?${params.toString()}`, { headers: { Accept: "application/json" } });
     if (!response.ok) {
       throw new Error(`Dashboard request failed with status ${response.status}`);
     }
     state.snapshot = await response.json();
-    state.customerPage = 0;
+    state.pageCache.set(cacheKey, state.snapshot);
+    const responsePage = Math.max(Number(state.snapshot?.meta?.customer_page || (state.customerPage + 1)), 1);
+    state.customerPage = responsePage - 1;
     render(state.snapshot);
     const nextUrl = new URL(window.location.href);
     nextUrl.searchParams.set("segment", state.segment);
     nextUrl.searchParams.set("limit", String(state.limit));
+    nextUrl.searchParams.set("customer_page", String(state.customerPage + 1));
+    nextUrl.searchParams.set("customer_page_size", String(state.customerPageSize));
+    nextUrl.searchParams.set("customer_sort", state.customerSort);
     if (state.location) {
       nextUrl.searchParams.set("location", state.location);
     } else {
@@ -496,7 +533,7 @@ async function fetchSnapshot() {
     }
   } finally {
     state.isFetching = false;
-    if (refreshButton) {
+    if (refreshButton && showFilterLoading) {
       refreshButton.disabled = false;
       refreshButton.textContent = originalLabel;
     }
@@ -511,6 +548,7 @@ filtersForm?.addEventListener("submit", (event) => {
   if (limitInput) {
     limitInput.value = String(state.limit);
   }
+  clearSnapshotCache();
   fetchSnapshot();
 });
 
@@ -524,23 +562,24 @@ customerPrevButton?.addEventListener("click", () => {
     return;
   }
   state.customerPage -= 1;
-  renderCustomers(state.snapshot?.high_risk_customers || []);
+  fetchSnapshot({ showFilterLoading: false, allowCachedPage: true });
 });
 
 customerNextButton?.addEventListener("click", () => {
-  const totalItems = (state.snapshot?.high_risk_customers || []).length;
-  const lastPage = Math.max(0, Math.ceil(totalItems / state.customerPageSize) - 1);
+  const totalPages = Math.max(Number(state.snapshot?.meta?.customer_total_pages || 1), 1);
+  const lastPage = totalPages - 1;
   if (state.customerPage >= lastPage) {
     return;
   }
   state.customerPage += 1;
-  renderCustomers(state.snapshot?.high_risk_customers || []);
+  fetchSnapshot({ showFilterLoading: false, allowCachedPage: true });
 });
 
 customerSortInput?.addEventListener("change", (event) => {
   state.customerSort = event.target.value || "desc";
   state.customerPage = 0;
-  renderCustomers(state.snapshot?.high_risk_customers || []);
+  clearSnapshotCache();
+  fetchSnapshot();
 });
 
 render(state.snapshot);

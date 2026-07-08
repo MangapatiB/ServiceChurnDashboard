@@ -91,6 +91,58 @@ class SqlServerClient:
             f"TrustServerCertificate={trust_server_certificate_value};"
         )
 
+    def fetch_latest_modem_health_by_account(self, account_numbers: list[str]) -> dict[str, dict[str, Any]]:
+        """Query modem data directly from modem SQL server by account number (fallback path)."""
+        sanitized_accounts = []
+        seen_accounts = set()
+        for account in account_numbers:
+            normalized_account = str(account or "").strip()
+            if not normalized_account or normalized_account in seen_accounts:
+                continue
+            seen_accounts.add(normalized_account)
+            sanitized_accounts.append(normalized_account)
+
+        if not sanitized_accounts:
+            return {}
+        if not self.is_configured():
+            logger.info("Skipping modem health query because SQL Server is not configured.")
+            return {}
+
+        connection = None
+        cursor = None
+        try:
+            pyodbc = __import__("pyodbc")
+            connection = pyodbc.connect(self._build_connection_string(), timeout=self.timeout_seconds)
+            connection.timeout = self.timeout_seconds
+            cursor = connection.cursor()
+            account_to_modem: dict[str, dict[str, Any]] = {}
+            for batch in self._iter_batches(sanitized_accounts, batch_size=100):
+                query = self._build_modem_health_by_account_query(batch)
+                cursor.execute(query, *batch)
+                column_names = [column[0] for column in cursor.description]
+                rows = cursor.fetchall()
+                for row in rows:
+                    row_dict = {
+                        column_name: self._serialize_value(value)
+                        for column_name, value in zip(column_names, row, strict=False)
+                    }
+                    account_key = self._normalize_string_value(row_dict.get("account"))
+                    if account_key:
+                        account_to_modem[account_key] = row_dict
+            logger.info("Fetched modem health rows by account from SQL Server. row_count=%s", len(account_to_modem))
+            return account_to_modem
+        except ModuleNotFoundError as exc:
+            logger.warning("pyodbc is not installed; modem health fallback is unavailable.")
+            return {}
+        except Exception:
+            logger.exception("Failed to load modem health rows by account from SQL Server.")
+            return {}
+        finally:
+            if cursor is not None:
+                cursor.close()
+            if connection is not None:
+                connection.close()
+
     def _build_modem_health_query(self, mac_addresses: list[str]) -> str:
         placeholders = ", ".join("?" for _ in mac_addresses)
         return f"""
@@ -112,15 +164,42 @@ WHERE row_rank = 1
 ORDER BY tstamp DESC
 """.strip()
 
-    def _iter_batches(self, items: list[str]) -> list[list[str]]:
-        batch_size = max(self.batch_size, 1)
-        return [items[index:index + batch_size] for index in range(0, len(items), batch_size)]
+    def _build_modem_health_by_account_query(self, account_numbers: list[str]) -> str:
+        """Query modem data by account from modem table, returning latest record per account."""
+        placeholders = ", ".join("?" for _ in account_numbers)
+        return f"""
+WITH ranked_modems AS (
+    SELECT
+        *,
+        ROW_NUMBER() OVER (
+            PARTITION BY account
+            ORDER BY tstamp DESC
+        ) AS row_rank
+    FROM {self.database}.{self.schema}.{self.table}
+    WHERE account IN ({placeholders})
+        AND ip <> '0.0.0.0'
+)
+SELECT *
+FROM ranked_modems
+WHERE row_rank = 1
+ORDER BY tstamp DESC
+""".strip()
+
+    def _iter_batches(self, items: list[str], batch_size: int | None = None) -> list[list[str]]:
+        size = batch_size if batch_size is not None else max(self.batch_size, 1)
+        return [items[index:index + size] for index in range(0, len(items), size)]
 
     @staticmethod
     def normalize_mac_key(value: Any) -> str:
         if value is None:
             return ""
         return str(value).strip().replace(":", "").upper()
+
+    @staticmethod
+    def _normalize_string_value(value: Any) -> str:
+        if value is None:
+            return ""
+        return str(value).strip()
 
     @staticmethod
     def _serialize_value(value: Any) -> Any:

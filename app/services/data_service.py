@@ -3,6 +3,8 @@ from contextlib import nullcontext
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
 import logging
+import time
+from threading import RLock
 from typing import Any
 
 from app.services.dashboard_sql_client import DashboardSqlClient
@@ -23,6 +25,13 @@ class DashboardDataService:
         self.config = config
         self.client = DashboardSqlClient(config)
         self.middleware_cache = MiddlewareDataCache(config)
+        self.snapshot_cache_seconds = int(config.get("DASHBOARD_SNAPSHOT_CACHE_SECONDS", 30))
+        self.call_data_cache_seconds = int(config.get("DASHBOARD_CALL_DATA_CACHE_SECONDS", 30))
+        self.modem_panel_scan_limit = int(config.get("MODEM_PANEL_SCAN_LIMIT", 10000))
+        self.modem_panel_max_rows = int(config.get("MODEM_PANEL_MAX_ROWS", 250))
+        self._snapshot_cache: dict[tuple[str, str, int, str], tuple[float, dict[str, Any]]] = {}
+        self._call_data_cache: dict[tuple[str, str, int, str, int, int], tuple[float, dict[str, Any]]] = {}
+        self._cache_lock = RLock()
 
     def open_query_session(self):
         return self.client.open_session()
@@ -32,12 +41,23 @@ class DashboardDataService:
         location: str = "",
         limit: int | None = None,
         customer_segment: str = "res",
+        customer_page: int | None = None,
+        customer_page_size: int | None = None,
+        customer_sort: str = "desc",
         query_session=None,
     ) -> dict[str, Any]:
         mode = self.config.get("DATA_SOURCE_MODE", "mock")
         safe_limit = normalize_limit(limit, default=self.config.get("HIGH_RISK_LIMIT", 12))
         safe_location = sanitize_location(location)
         safe_segment = normalize_customer_segment(customer_segment)
+        safe_customer_page = normalize_limit(customer_page, default=1, minimum=1, maximum=100000)
+        safe_customer_page_size = normalize_limit(
+            customer_page_size,
+            default=int(self.config.get("DASHBOARD_CUSTOMER_PAGE_SIZE", 15)),
+            minimum=1,
+            maximum=250,
+        )
+        safe_customer_sort = "asc" if str(customer_sort).strip().lower() == "asc" else "desc"
 
         logger.info(
             "Building dashboard snapshot. mode=%s location=%s limit=%s segment=%s",
@@ -56,33 +76,51 @@ class DashboardDataService:
             logger.info("Returning mock dashboard snapshot.")
             return snapshot
 
+        cache_key = (
+            "dashboard",
+            safe_location,
+            safe_limit,
+            safe_segment,
+            safe_customer_page,
+            safe_customer_page_size,
+            safe_customer_sort,
+        )
+        cached_snapshot = self._cache_get(self._snapshot_cache, cache_key)
+        if cached_snapshot is not None:
+            logger.info(
+                "Serving dashboard snapshot from cache. location=%s limit=%s segment=%s",
+                safe_location or "ALL LOCATIONS",
+                safe_limit,
+                safe_segment,
+            )
+            return cached_snapshot
+
         try:
             session_context = self.client.open_session() if query_session is None else nullcontext(query_session)
             with session_context as session:
-                truckroll_rows = self.client.fetch_truckroll_rows(safe_location, safe_limit, query_session=session)
-                subscriber_account_numbers = [row[1] for row in truckroll_rows if len(row) > 1]
-                churn_rows = self.client.fetch_churn_rows(subscriber_account_numbers, safe_segment, query_session=session)
-                displayed_account_numbers = self._select_displayed_account_numbers(truckroll_rows, churn_rows, safe_limit)
-                displayed_subscriber_accounts = self._select_displayed_subscriber_account_numbers(
-                    truckroll_rows,
-                    churn_rows,
-                    safe_limit,
-                )
-                call_rows, call_scope = self._load_call_rows(
-                    displayed_subscriber_accounts,
-                    safe_segment,
-                    query_session=session,
-                )
-                return self._build_live_snapshot(
-                    truckroll_rows,
-                    churn_rows,
-                    call_rows,
+                dashboard_customer_rows = self.client.fetch_dashboard_customer_rows(
                     safe_location,
                     safe_limit,
-                    call_scope,
                     safe_segment,
                     query_session=session,
                 )
+                snapshot = self._build_live_snapshot(
+                    dashboard_customer_rows,
+                    safe_location,
+                    safe_limit,
+                    safe_segment,
+                    safe_customer_page,
+                    safe_customer_page_size,
+                    safe_customer_sort,
+                    query_session=session,
+                )
+                self._cache_put(
+                    self._snapshot_cache,
+                    cache_key,
+                    snapshot,
+                    self.snapshot_cache_seconds,
+                )
+                return snapshot
         except Exception as exc:  # noqa: BLE001
             logger.exception(
                 "Failed to build live dashboard snapshot. Falling back to mock data. location=%s limit=%s segment=%s",
@@ -90,15 +128,14 @@ class DashboardDataService:
                 safe_limit,
                 safe_segment,
             )
-            snapshot = build_mock_snapshot()
-            snapshot["meta"]["source"] = "fallback"
-            snapshot["meta"]["status"] = "degraded"
-            snapshot["meta"]["message"] = f"Live dashboard table query failed: {exc}"
-            snapshot["meta"]["location"] = safe_location or "ALL LOCATIONS"
-            snapshot["meta"]["limit"] = safe_limit
-            snapshot["meta"]["customer_segment"] = safe_segment
-            snapshot["high_risk_customers"] = snapshot["high_risk_customers"][:safe_limit]
-            return snapshot
+            return self._build_empty_live_snapshot(
+                location=safe_location,
+                limit=safe_limit,
+                customer_segment=safe_segment,
+                source="fallback",
+                status="degraded",
+                message=f"Live dashboard table query failed: {exc}",
+            )
 
     def get_location_options(self, query_session=None) -> list[str]:
         mode = self.config.get("DATA_SOURCE_MODE", "mock")
@@ -167,14 +204,38 @@ class DashboardDataService:
                 "rows": [],
             }
 
+        cache_key = (
+            "call-data",
+            safe_location,
+            safe_limit,
+            safe_segment,
+            safe_page,
+            safe_page_size,
+        )
+        cached_call_data = self._cache_get(self._call_data_cache, cache_key)
+        if cached_call_data is not None:
+            logger.info(
+                "Serving call-data from cache. location=%s limit=%s segment=%s page=%s page_size=%s",
+                safe_location or "ALL LOCATIONS",
+                safe_limit,
+                safe_segment,
+                safe_page,
+                safe_page_size,
+            )
+            return cached_call_data
+
         try:
             session_context = self.client.open_session() if query_session is None else nullcontext(query_session)
             with session_context as session:
-                truckroll_rows = self.client.fetch_truckroll_rows(safe_location, safe_limit, query_session=session)
-                subscriber_account_numbers = [row[1] for row in truckroll_rows if len(row) > 1]
-                # For call-data pagination, rely on truckroll watchlist order directly to avoid
-                # the extra churn-table query that adds significant latency at high limits.
-                displayed_account_numbers = self._dedupe_preserving_order(subscriber_account_numbers)
+                dashboard_customer_rows = self.client.fetch_dashboard_customer_rows(
+                    safe_location,
+                    safe_limit,
+                    safe_segment,
+                    query_session=session,
+                )
+                displayed_account_numbers = self._dedupe_preserving_order(
+                    [self._normalize_account_number(row[1]) for row in dashboard_customer_rows if len(row) > 1]
+                )
                 total_records = len(displayed_account_numbers)
                 total_pages = max((total_records + safe_page_size - 1) // safe_page_size, 1)
                 effective_page = min(safe_page, total_pages)
@@ -188,7 +249,7 @@ class DashboardDataService:
                 )
             page_row_start = ((effective_page - 1) * safe_page_size + 1) if total_records else 0
             page_row_end = min(effective_page * safe_page_size, total_records) if total_records else 0
-            return {
+            response_payload = {
                 "meta": {
                     "source": "live",
                     "status": "healthy",
@@ -207,6 +268,13 @@ class DashboardDataService:
                 },
                 "rows": [self._coerce_call_record_row(row) for row in call_record_rows],
             }
+            self._cache_put(
+                self._call_data_cache,
+                cache_key,
+                response_payload,
+                self.call_data_cache_seconds,
+            )
+            return response_payload
         except Exception as exc:  # noqa: BLE001
             logger.exception(
                 "Failed to load live call data records. location=%s limit=%s segment=%s",
@@ -245,33 +313,43 @@ class DashboardDataService:
             ordered_values.append(value)
         return ordered_values
 
+    def _cache_get(self, cache_store, cache_key):
+        with self._cache_lock:
+            cached_item = cache_store.get(cache_key)
+            if not cached_item:
+                return None
+            expires_at, payload = cached_item
+            if time.time() >= expires_at:
+                cache_store.pop(cache_key, None)
+                return None
+            return payload
+
+    def _cache_put(self, cache_store, cache_key, payload, ttl_seconds):
+        if ttl_seconds <= 0:
+            return
+        with self._cache_lock:
+            cache_store[cache_key] = (time.time() + ttl_seconds, payload)
+
     def _build_live_snapshot(
         self,
-        truckroll_rows: list[Any],
-        churn_rows: list[Any],
-        call_rows: list[Any],
+        dashboard_customer_rows: list[Any],
         location: str,
         limit: int,
-        call_scope: str = "watchlist",
         customer_segment: str = "res",
+        customer_page: int = 1,
+        customer_page_size: int = 15,
+        customer_sort: str = "desc",
         query_session=None,
     ) -> dict[str, Any]:
-        if not truckroll_rows:
-            snapshot = build_mock_snapshot()
-            snapshot["meta"]["source"] = "live"
-            snapshot["meta"]["status"] = "empty"
-            snapshot["meta"]["message"] = "No truckroll-flagged, contactable accounts matched the current filter."
-            snapshot["meta"]["location"] = location or "ALL LOCATIONS"
-            snapshot["meta"]["limit"] = limit
-            snapshot["meta"]["customer_segment"] = customer_segment
-            snapshot["kpis"] = [
-                {"label": "Flagged accounts", "value": "0", "delta": "No matches", "tone": "warning"},
-                {"label": "Outreach-ready phones", "value": "0", "delta": "No matches", "tone": "warning"},
-            ]
-            snapshot["geo_summary"] = []
-            snapshot["high_risk_customers"] = []
-            snapshot["signal_mix"] = []
-            return snapshot
+        if not dashboard_customer_rows:
+            return self._build_empty_live_snapshot(
+                location=location,
+                limit=limit,
+                customer_segment=customer_segment,
+                source="live",
+                status="empty",
+                message="No truckroll-flagged, contactable accounts matched the current filter.",
+            )
 
         snapshot = build_mock_snapshot()
         snapshot["meta"]["source"] = "live"
@@ -281,21 +359,13 @@ class DashboardDataService:
         snapshot["meta"]["customer_segment"] = customer_segment
         snapshot["meta"]["last_updated"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
-        churn_by_account = {}
-        for record in churn_rows:
-            if len(record) < 6:
-                continue
-            churn_record = self._coerce_churn_row(record)
-            if churn_record["customer_id"]:
-                churn_by_account[churn_record["customer_id"]] = churn_record
-        call_rollups = self._build_call_account_rollups(call_rows)
         customers = []
         signal_counter: Counter[str] = Counter()
         markets: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
 
-        for row in truckroll_rows:
-            truckroll_record = self._coerce_truckroll_row(row)
-            churn_record = churn_by_account.get(truckroll_record["customer_id"], {})
+        for row in dashboard_customer_rows:
+            truckroll_record = self._coerce_truckroll_row(row[:4])
+            churn_record = self._coerce_churn_row((row[1], row[4], row[5], row[6], row[7], row[8]))
             features = [feature for feature in churn_record.get("features", []) if feature]
             for feature in features:
                 signal_counter[feature] += 1
@@ -335,33 +405,91 @@ class DashboardDataService:
                 "triple_calls_12m": False,
                 "modem_health": {},
             }
-            call_rollup = call_rollups.get(truckroll_record["customer_id"], {})
+            customers.append(customer)
+            markets[truckroll_record["geo"]].append({**customer, "features": features})
+
+        customers.sort(
+            key=lambda item: (item["risk_score"], item.get("customer_id", "")),
+            reverse=(customer_sort != "asc"),
+        )
+        unique_customers = []
+        seen_customer_keys: set[tuple[str, str]] = set()
+        for customer in customers:
+            dedupe_key = (
+                str(customer.get("customer_id") or "").strip(),
+                str(customer.get("legacy_account_number") or "").strip(),
+            )
+            if dedupe_key in seen_customer_keys:
+                continue
+            seen_customer_keys.add(dedupe_key)
+            unique_customers.append(customer)
+        selected_customers = unique_customers[:limit]
+        total_customers = len(selected_customers)
+        total_customer_pages = max((total_customers + customer_page_size - 1) // customer_page_size, 1)
+        effective_customer_page = min(customer_page, total_customer_pages)
+        customer_start_index = (effective_customer_page - 1) * customer_page_size
+        customer_end_index = customer_start_index + customer_page_size
+        paged_customers = selected_customers[customer_start_index:customer_end_index]
+
+        visible_subscriber_account_numbers = [
+            customer.get("customer_id", "")
+            for customer in paged_customers
+            if customer.get("customer_id")
+        ]
+        call_scope = "watchlist"
+        try:
+            call_rows, call_scope = self._load_call_rows(
+                visible_subscriber_account_numbers,
+                customer_segment,
+                query_session=query_session,
+            )
+        except Exception:  # noqa: BLE001
+            # Keep the snapshot healthy for customer/modem views even if call-history data times out.
+            logger.exception(
+                "Failed to load call-history rows for dashboard snapshot. Continuing with empty call-history data."
+            )
+            call_rows = []
+            call_scope = "watchlist"
+        call_rollups = self._build_call_account_rollups(call_rows)
+        for customer in paged_customers:
+            call_rollup = call_rollups.get(customer.get("customer_id", ""), {})
             customer["calls_6m"] = int(call_rollup.get("calls_6m", 0))
             customer["calls_12m"] = int(call_rollup.get("calls_12m", 0))
             customer["repeat_calls_12m"] = customer["calls_12m"] >= 2
             customer["triple_calls_12m"] = customer["calls_12m"] >= 3
-            customers.append(customer)
-            markets[truckroll_record["geo"]].append({**customer, "features": features})
 
-        customers.sort(key=lambda item: item["risk_score"], reverse=True)
-        customers = customers[:limit]
-        modem_metrics = self._enrich_customers_with_modem_health(customers, query_session=query_session)
+        # Keep customer-table enrichment page-scoped for responsiveness.
+        self._enrich_customers_with_modem_health(paged_customers, query_session=query_session)
 
-        high_risk_count = sum(1 for item in customers if item["risk_score"] >= 90)
-        avg_risk = round(sum(item["risk_score"] for item in customers) / len(customers)) if customers else 0
+        # Build modem panel from the full selected location set so telemetry is visible
+        # even when page 1 customers have no account-to-MAC mappings.
+        panel_scan_count = min(len(selected_customers), max(self.modem_panel_scan_limit, 1))
+        modem_panel_customers = selected_customers[:panel_scan_count]
+        modem_metrics = self._enrich_customers_with_modem_health(modem_panel_customers, query_session=query_session)
+
+        high_risk_count = sum(1 for item in selected_customers if item["risk_score"] >= 90)
+        avg_risk = round(sum(item["risk_score"] for item in selected_customers) / len(selected_customers)) if selected_customers else 0
         signal_mix = self._build_signal_mix(signal_counter)
         geo_summary = self._build_geo_summary(markets)
 
         snapshot["meta"]["message"] = (
             f"Live watchlist built from ServiceChurnDashboard SQL tables for {snapshot['meta']['location']}."
         )
+        snapshot["meta"]["customer_page"] = effective_customer_page
+        snapshot["meta"]["customer_page_size"] = customer_page_size
+        snapshot["meta"]["customer_total_records"] = total_customers
+        snapshot["meta"]["customer_total_pages"] = total_customer_pages
+        snapshot["meta"]["customer_row_start"] = customer_start_index + 1 if total_customers else 0
+        snapshot["meta"]["customer_row_end"] = min(customer_end_index, total_customers) if total_customers else 0
+        snapshot["meta"]["customer_sort"] = customer_sort
+        snapshot["meta"]["modem_panel_evaluated_accounts"] = panel_scan_count
         snapshot["kpis"] = [
-            {"label": "Flagged accounts", "value": f"{len(customers)}", "delta": f"Limit {limit}", "tone": "risk"},
+            {"label": "Flagged accounts", "value": f"{len(selected_customers)}", "delta": f"Limit {limit}", "tone": "risk"},
             {"label": "Average churn risk", "value": f"{avg_risk}", "delta": "Latest model score", "tone": "warning"},
             {"label": "90+ risk accounts", "value": f"{high_risk_count}", "delta": "Immediate outreach", "tone": "risk"},
             {
                 "label": "Outreach-ready phones",
-                "value": f"{sum(1 for item in customers if item['phone_number'])}",
+                "value": f"{sum(1 for item in selected_customers if item['phone_number'])}",
                 "delta": "Opt-in and contactable",
                 "tone": "good",
             },
@@ -369,10 +497,72 @@ class DashboardDataService:
         ]
         snapshot["signal_mix"] = signal_mix
         snapshot["geo_summary"] = geo_summary
-        snapshot["high_risk_customers"] = customers
-        snapshot["modem_health"] = self._build_modem_health_snapshot(customers, modem_metrics)
+        snapshot["high_risk_customers"] = paged_customers
+        snapshot["modem_health"] = self._build_modem_health_snapshot(
+            modem_panel_customers,
+            modem_metrics,
+            evaluated_accounts=panel_scan_count,
+            max_rows=self.modem_panel_max_rows,
+        )
         snapshot["call_history"] = self._build_call_history(call_rows, call_scope)
-        snapshot["playbooks"] = self._build_playbooks(high_risk_count, len(customers))
+        snapshot["playbooks"] = self._build_playbooks(high_risk_count, len(selected_customers))
+        return snapshot
+
+    def _build_empty_live_snapshot(
+        self,
+        location: str,
+        limit: int,
+        customer_segment: str,
+        source: str,
+        status: str,
+        message: str,
+    ) -> dict[str, Any]:
+        snapshot = build_mock_snapshot()
+        snapshot["meta"]["source"] = source
+        snapshot["meta"]["status"] = status
+        snapshot["meta"]["message"] = message
+        snapshot["meta"]["location"] = location or "ALL LOCATIONS"
+        snapshot["meta"]["limit"] = limit
+        snapshot["meta"]["customer_segment"] = customer_segment
+        snapshot["meta"]["last_updated"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+        snapshot["meta"]["customer_page"] = 1
+        snapshot["meta"]["customer_page_size"] = int(self.config.get("DASHBOARD_CUSTOMER_PAGE_SIZE", 15))
+        snapshot["meta"]["customer_total_records"] = 0
+        snapshot["meta"]["customer_total_pages"] = 1
+        snapshot["meta"]["customer_row_start"] = 0
+        snapshot["meta"]["customer_row_end"] = 0
+        snapshot["meta"]["customer_sort"] = "desc"
+        snapshot["kpis"] = [
+            {"label": "Flagged accounts", "value": "0", "delta": "No matches", "tone": "warning"},
+            {"label": "Outreach-ready phones", "value": "0", "delta": "No matches", "tone": "warning"},
+        ]
+        snapshot["signal_mix"] = []
+        snapshot["geo_summary"] = []
+        snapshot["high_risk_customers"] = []
+        snapshot["call_history"] = {"summary": [], "segments": [], "scope": "watchlist"}
+        snapshot["modem_health"] = {
+            "summary": [
+                {
+                    "label": "Accounts with telemetry",
+                    "value": "0",
+                    "delta": "0 watchlist accounts evaluated",
+                    "tone": "warning",
+                },
+                {
+                    "label": "Connected modems",
+                    "value": "0",
+                    "delta": "Latest SQL Server sample with valid IP",
+                    "tone": "warning",
+                },
+                {
+                    "label": "Latest modem sample",
+                    "value": "n/a",
+                    "delta": "Refreshed in middleware every 60 minutes",
+                    "tone": "warning",
+                },
+            ],
+            "modems": [],
+        }
         return snapshot
 
     def _enrich_customers_with_modem_health(self, customers: list[dict[str, Any]], query_session=None) -> dict[str, Any]:
@@ -431,8 +621,22 @@ class DashboardDataService:
 
         return {"telemetry_accounts": telemetry_accounts, "latest_seen": latest_seen}
 
-    def _build_modem_health_snapshot(self, customers: list[dict[str, Any]], modem_metrics: dict[str, Any]) -> dict[str, Any]:
-        modem_rows = [customer for customer in customers if customer.get("modem_mac")]
+    def _build_modem_health_snapshot(
+        self,
+        customers: list[dict[str, Any]],
+        modem_metrics: dict[str, Any],
+        evaluated_accounts: int | None = None,
+        max_rows: int | None = None,
+    ) -> dict[str, Any]:
+        modem_rows = [
+            customer
+            for customer in customers
+            if customer.get("modem_mac") or customer.get("modem_ip")
+        ]
+        if max_rows is not None and max_rows > 0:
+            modem_rows = modem_rows[:max_rows]
+
+        evaluated_count = evaluated_accounts if evaluated_accounts is not None else len(customers)
         latest_seen = modem_metrics.get("latest_seen") or "n/a"
         connected_count = sum(1 for customer in modem_rows if customer.get("modem_ip"))
 
@@ -441,7 +645,7 @@ class DashboardDataService:
                 {
                     "label": "Accounts with telemetry",
                     "value": f"{modem_metrics.get('telemetry_accounts', 0)}",
-                    "delta": f"{len(customers)} watchlist accounts evaluated",
+                    "delta": f"{evaluated_count} watchlist accounts evaluated",
                     "tone": "good" if modem_metrics.get("telemetry_accounts", 0) else "warning",
                 },
                 {

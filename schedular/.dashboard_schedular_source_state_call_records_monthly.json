@@ -1,0 +1,8 @@
+{
+  "source_fingerprints": {
+    "dbo.service_churn_call_records_monthly": {
+      "row_count": 750474,
+      "hash_total": "6924758392787086002088020"
+    }
+  }
+}

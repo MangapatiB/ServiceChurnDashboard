@@ -1240,7 +1240,7 @@ textarea {
 }
 
 .customer-col--risk {
-  width: 9%;
+  width: 11%;
 }
 
 .customer-col--drivers {
@@ -1261,7 +1261,7 @@ textarea {
 }
 
 .customer-head--risk,
-.customer-col-cell--risk,
+.customer-col-cell--risk {
   text-align: center;
 }
 

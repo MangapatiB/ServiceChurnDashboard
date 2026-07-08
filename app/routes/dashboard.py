@@ -30,11 +30,17 @@ def dashboard_home():
         maximum=current_app.config["MAX_DASHBOARD_LIMIT"],
     )
     customer_segment = normalize_customer_segment(request.args.get("segment"))
+    customer_page = normalize_limit(request.args.get("customer_page"), default=1, minimum=1, maximum=100000)
+    customer_page_size = normalize_limit(request.args.get("customer_page_size"), default=15, minimum=1, maximum=250)
+    customer_sort = "asc" if str(request.args.get("customer_sort", "desc")).strip().lower() == "asc" else "desc"
     with service.open_query_session() as query_session:
         snapshot = service.get_dashboard_snapshot(
             location=location,
             limit=limit,
             customer_segment=customer_segment,
+            customer_page=customer_page,
+            customer_page_size=customer_page_size,
+            customer_sort=customer_sort,
             query_session=query_session,
         )
         location_options = service.get_location_options(query_session=query_session)
@@ -47,6 +53,9 @@ def dashboard_home():
         current_location=location,
         current_limit=limit,
         current_segment=customer_segment,
+        current_customer_page=snapshot.get("meta", {}).get("customer_page", customer_page),
+        current_customer_page_size=snapshot.get("meta", {}).get("customer_page_size", customer_page_size),
+        current_customer_sort=snapshot.get("meta", {}).get("customer_sort", customer_sort),
         max_dashboard_limit=current_app.config["MAX_DASHBOARD_LIMIT"],
     )
 
@@ -135,4 +144,16 @@ def dashboard_api():
         maximum=current_app.config["MAX_DASHBOARD_LIMIT"],
     )
     customer_segment = normalize_customer_segment(request.args.get("segment"))
-    return jsonify(service.get_dashboard_snapshot(location=location, limit=limit, customer_segment=customer_segment))
+    customer_page = normalize_limit(request.args.get("customer_page"), default=1, minimum=1, maximum=100000)
+    customer_page_size = normalize_limit(request.args.get("customer_page_size"), default=15, minimum=1, maximum=250)
+    customer_sort = "asc" if str(request.args.get("customer_sort", "desc")).strip().lower() == "asc" else "desc"
+    return jsonify(
+        service.get_dashboard_snapshot(
+            location=location,
+            limit=limit,
+            customer_segment=customer_segment,
+            customer_page=customer_page,
+            customer_page_size=customer_page_size,
+            customer_sort=customer_sort,
+        )
+    )

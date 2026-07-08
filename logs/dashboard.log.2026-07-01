@@ -1,0 +1,142 @@
+2026-07-01 00:10:25 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=4
+2026-07-01 00:12:16 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 00:12:16 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 00:12:17 | ERROR | app.services.data_service | Failed to build live dashboard snapshot. Falling back to mock data. location=ALL LOCATIONS limit=10000 segment=res
+Traceback (most recent call last):
+  File "/root/MyProjects/Dashboard/app/services/data_service.py", line 99, in get_dashboard_snapshot
+    dashboard_customer_rows = self.client.fetch_dashboard_customer_rows(
+  File "/root/MyProjects/Dashboard/app/services/dashboard_sql_client.py", line 157, in fetch_dashboard_customer_rows
+    return self._fetch_rows(query, params, query_session=query_session)
+  File "/root/MyProjects/Dashboard/app/services/dashboard_sql_client.py", line 400, in _fetch_rows
+    return query_session.fetch_rows(query, params)
+  File "/root/MyProjects/Dashboard/app/services/dashboard_sql_client.py", line 32, in fetch_rows
+    cursor.timeout = self._client.timeout_seconds
+AttributeError: 'pyodbc.Cursor' object has no attribute 'timeout'
+2026-07-01 00:12:17 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 00:12:17 | ERROR | app.services.data_service | Failed to build live dashboard snapshot. Falling back to mock data. location=ALL LOCATIONS limit=10000 segment=res
+Traceback (most recent call last):
+  File "/root/MyProjects/Dashboard/app/services/data_service.py", line 99, in get_dashboard_snapshot
+    dashboard_customer_rows = self.client.fetch_dashboard_customer_rows(
+  File "/root/MyProjects/Dashboard/app/services/dashboard_sql_client.py", line 157, in fetch_dashboard_customer_rows
+    return self._fetch_rows(query, params, query_session=query_session)
+  File "/root/MyProjects/Dashboard/app/services/dashboard_sql_client.py", line 400, in _fetch_rows
+    return query_session.fetch_rows(query, params)
+  File "/root/MyProjects/Dashboard/app/services/dashboard_sql_client.py", line 32, in fetch_rows
+    cursor.timeout = self._client.timeout_seconds
+AttributeError: 'pyodbc.Cursor' object has no attribute 'timeout'
+2026-07-01 00:12:32 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 00:12:32 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 00:12:36 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-07-01 00:12:37 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 00:12:40 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-07-01 00:19:05 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 00:19:05 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 00:19:09 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-07-01 00:19:24 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 00:20:25 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 00:20:25 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 00:20:29 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-07-01 00:20:30 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 00:20:33 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-07-01 00:40:05 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 00:40:05 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 00:40:07 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-07-01 00:40:27 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 00:44:11 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 00:44:11 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 00:44:15 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-07-01 00:44:16 | INFO | app.services.middleware_cache | Account-to-MAC coverage low (0.0%). Attempting fallback query to modem SQL.
+2026-07-01 00:44:17 | ERROR | app.services.sql_server_client | Failed to load modem health rows by account from SQL Server.
+Traceback (most recent call last):
+  File "/root/MyProjects/Dashboard/app/services/sql_server_client.py", line 53, in fetch_modem_health_by_account
+    cursor.execute(query, *batch)
+pyodbc.ProgrammingError: ('The SQL contains 90 parameter markers, but 30 parameters were supplied', 'HY000')
+2026-07-01 00:44:17 | ERROR | app.services.middleware_cache | Fallback modem health query by account failed.
+Traceback (most recent call last):
+  File "/root/MyProjects/Dashboard/app/services/middleware_cache.py", line 148, in _get_modem_health_by_account_fallback
+    modem_health_by_mac = self.modem_sql_client.fetch_modem_health_by_account(account_numbers)
+  File "/root/MyProjects/Dashboard/app/services/sql_server_client.py", line 53, in fetch_modem_health_by_account
+    cursor.execute(query, *batch)
+pyodbc.ProgrammingError: ('The SQL contains 90 parameter markers, but 30 parameters were supplied', 'HY000')
+2026-07-01 00:44:43 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 00:44:43 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 00:44:47 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-07-01 00:44:48 | INFO | app.services.middleware_cache | Account-to-MAC coverage low (0.0%). Attempting fallback query to modem SQL.
+2026-07-01 00:44:49 | ERROR | app.services.sql_server_client | Failed to load modem health rows by account from SQL Server.
+Traceback (most recent call last):
+  File "/root/MyProjects/Dashboard/app/services/sql_server_client.py", line 54, in fetch_modem_health_by_account
+    cursor.execute(query, *batch, *batch, *batch)
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'acctnum'. (207) (SQLExecDirectW)")
+2026-07-01 00:44:49 | ERROR | app.services.middleware_cache | Fallback modem health query by account failed.
+Traceback (most recent call last):
+  File "/root/MyProjects/Dashboard/app/services/middleware_cache.py", line 148, in _get_modem_health_by_account_fallback
+    modem_health_by_mac = self.modem_sql_client.fetch_modem_health_by_account(account_numbers)
+  File "/root/MyProjects/Dashboard/app/services/sql_server_client.py", line 54, in fetch_modem_health_by_account
+    cursor.execute(query, *batch, *batch, *batch)
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'acctnum'. (207) (SQLExecDirectW)")
+2026-07-01 00:46:40 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 00:46:40 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 00:46:44 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-07-01 00:46:44 | INFO | app.services.middleware_cache | Modem enrichment: 0/30 accounts (0.0%) have health data.
+2026-07-01 01:04:12 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 01:04:12 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 01:04:17 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-07-01 01:04:17 | INFO | app.services.middleware_cache | Account-to-MAC coverage low (3.3%). Falling back to direct modem query.
+2026-07-01 01:04:18 | ERROR | app.services.sql_server_client | Failed to load modem health rows by account from SQL Server.
+Traceback (most recent call last):
+  File "/root/MyProjects/Dashboard/app/services/sql_server_client.py", line 121, in fetch_latest_modem_health_by_account
+    cursor.execute(query, *batch)
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'account'. (207) (SQLExecDirectW)")
+2026-07-01 01:04:18 | INFO | app.services.middleware_cache | Fallback modem cache refreshed. row_count=0
+2026-07-01 01:04:33 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 01:06:28 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 01:06:53 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 01:07:03 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 01:07:27 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 01:08:01 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 01:08:01 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 01:08:05 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-07-01 01:08:05 | INFO | app.services.middleware_cache | Account-to-MAC coverage low (3.3%). Falling back to direct modem query.
+2026-07-01 01:08:05 | INFO | app.services.middleware_cache | Loading modem health table as fallback (account-to-MAC coverage insufficient).
+2026-07-01 01:08:07 | INFO | app.services.dashboard_sql_client | Loaded all modem health records as fallback. count=5000
+2026-07-01 01:08:07 | INFO | app.services.middleware_cache | Fallback modem cache loaded from dashboard server. row_count=5000
+2026-07-01 01:08:27 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 01:10:17 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 01:10:17 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 01:10:21 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-07-01 01:10:57 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 01:10:58 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-07-01 01:10:58 | WARNING | app.services.middleware_cache | No account-to-MAC mappings found for 10 requested accounts. Populate service_churn_account_mac_map to enable modem enrichment.
+2026-07-01 11:36:23 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 11:39:09 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 11:39:09 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 11:39:10 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=BOISE limit=10000 segment=res
+2026-07-01 11:39:26 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=3
+2026-07-01 11:39:26 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=PRESCOTT limit=10000 segment=res
+2026-07-01 11:39:41 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=3
+2026-07-01 11:39:42 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=LAWTON limit=10000 segment=res
+2026-07-01 11:39:44 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-07-01 11:40:08 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 12:52:56 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 12:52:56 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 13:14:41 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 13:14:41 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 13:14:45 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-07-01 13:14:46 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=BOISE limit=10000 segment=res
+2026-07-01 13:14:46 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-07-01 13:14:46 | WARNING | app.services.middleware_cache | No account-to-MAC mappings found for 30 requested accounts. Populate service_churn_account_mac_map to enable modem enrichment.
+2026-07-01 14:53:32 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-01 14:53:32 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=10000 segment=res
+2026-07-01 14:53:36 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=1
+2026-07-01 14:54:31 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=168
+2026-07-01 14:54:49 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=BOISE limit=10000 segment=res
+2026-07-01 14:54:52 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-07-01 14:54:52 | WARNING | app.services.middleware_cache | No account-to-MAC mappings found for 30 requested accounts. Populate service_churn_account_mac_map to enable modem enrichment.
+2026-07-01 14:55:08 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=76
+2026-07-01 14:55:17 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=PRESCOTT limit=10000 segment=res
+2026-07-01 14:55:20 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-07-01 14:55:20 | WARNING | app.services.middleware_cache | No account-to-MAC mappings found for 30 requested accounts. Populate service_churn_account_mac_map to enable modem enrichment.
+2026-07-01 14:55:26 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=23
+2026-07-01 14:55:29 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=LAWTON limit=10000 segment=res
+2026-07-01 14:55:28 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-07-01 14:55:29 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0

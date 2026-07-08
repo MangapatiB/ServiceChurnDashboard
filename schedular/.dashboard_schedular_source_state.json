@@ -9,8 +9,8 @@
       "hash_total": "6463527041370379922296047"
     },
     "dbo.service_churn_modem_health_latest": {
-      "row_count": 913520,
-      "hash_total": "8425824083796024927488032"
+      "row_count": 956021,
+      "hash_total": "8811200663180426305541528"
     },
     "dbo.service_churn_res_latest": {
       "row_count": 904748,

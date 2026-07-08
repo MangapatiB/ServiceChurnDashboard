@@ -45,6 +45,11 @@ class MiddlewareDataCache:
                 account_to_mac[account_number] = modem_mac
 
         if not account_to_mac:
+            logger.warning(
+                "No account-to-MAC mappings found for %d requested accounts. "
+                "Populate service_churn_account_mac_map to enable modem enrichment.",
+                len(sanitized_accounts),
+            )
             return {}
 
         modem_health_by_mac = self._get_modem_health_rows(list(account_to_mac.values()), query_session=query_session)

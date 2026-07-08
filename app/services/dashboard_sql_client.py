@@ -18,6 +18,7 @@ class DashboardSqlQuerySession:
 
     def __enter__(self) -> "DashboardSqlQuerySession":
         self._connection = self._client._open_connection()
+        self._connection.timeout = self._client.timeout_seconds
         return self
 
     def __exit__(self, exc_type, exc, exc_tb) -> None:
@@ -84,9 +85,9 @@ class DashboardSqlClient:
 
     def fetch_location_options(self, query_session: DashboardSqlQuerySession | None = None) -> list[str]:
         query = (
-            f"SELECT DISTINCT UPPER(BillingCity) AS BillingCity "
+            "SELECT DISTINCT UPPER(LTRIM(RTRIM(BillingCity))) AS BillingCity "
             f"FROM {self._qualified_table(self.truckroll_table)} "
-            "WHERE BillingCity IS NOT NULL "
+            "WHERE BillingCity IS NOT NULL AND LTRIM(RTRIM(BillingCity)) <> '' "
             "ORDER BY BillingCity"
         )
         rows = self._fetch_rows(query, query_session=query_session)
@@ -103,8 +104,8 @@ class DashboardSqlClient:
         params: list[Any] = []
         where_clauses = ["SubscriberAccountNumber IS NOT NULL"]
         if safe_location:
-            where_clauses.append("UPPER(BillingCity) = ?")
-            params.append(safe_location)
+            where_clauses.append("(UPPER(LTRIM(RTRIM(BillingCity))) = ? OR UPPER(LTRIM(RTRIM(BillingCity))) LIKE ?)")
+            params.extend([safe_location, f"{safe_location}%"])
 
         query = (
             f"SELECT TOP {safe_limit} LegacyAccountNumber, SubscriberAccountNumber, PhoneNumber, UPPER(BillingCity) AS BillingCity "
@@ -113,6 +114,61 @@ class DashboardSqlClient:
             "ORDER BY "
             "CASE WHEN BillingCity IS NULL OR LTRIM(RTRIM(BillingCity)) = '' THEN 1 ELSE 0 END, "
             "UPPER(BillingCity), SubscriberAccountNumber"
+        )
+        return self._fetch_rows(query, params, query_session=query_session)
+
+    def fetch_dashboard_customer_rows(
+        self,
+        location: str = "",
+        limit: int | None = None,
+        customer_segment: str = "res",
+        query_session: DashboardSqlQuerySession | None = None,
+    ) -> list[tuple[Any, ...]]:
+        safe_location = sanitize_location(location)
+        safe_limit = normalize_limit(limit, default=25)
+        churn_table = self.com_churn_table if customer_segment == "com" else self.res_churn_table
+
+        params: list[Any] = []
+        where_clauses = ["tr.SubscriberAccountNumber IS NOT NULL"]
+        if safe_location:
+            where_clauses.append(
+                "(UPPER(LTRIM(RTRIM(tr.BillingCity))) = ? OR UPPER(LTRIM(RTRIM(tr.BillingCity))) LIKE ?)"
+            )
+            params.extend([safe_location, f"{safe_location}%"])
+
+        query = (
+            "WITH ranked_accounts AS ("
+            "SELECT "
+            "tr.LegacyAccountNumber, "
+            "tr.SubscriberAccountNumber, "
+            "tr.PhoneNumber, "
+            "UPPER(tr.BillingCity) AS BillingCity, "
+            "COALESCE(ch.ChurnProbability, 0) AS ChurnProbability, "
+            "ch.PredictionMonth, "
+            "ch.Top1Feature, "
+            "ch.Top2Feature, "
+            "ch.Top3Feature, "
+            "ROW_NUMBER() OVER ("
+            "PARTITION BY tr.SubscriberAccountNumber "
+            "ORDER BY "
+            "COALESCE(ch.ChurnProbability, 0) DESC, "
+            "CASE WHEN tr.BillingCity IS NULL OR LTRIM(RTRIM(tr.BillingCity)) = '' THEN 1 ELSE 0 END, "
+            "UPPER(tr.BillingCity), "
+            "tr.LegacyAccountNumber DESC"
+            ") AS account_rank "
+            f"FROM {self._qualified_table(self.truckroll_table)} tr "
+            f"LEFT JOIN {self._qualified_table(churn_table)} ch "
+            "ON ch.SubscriberAccountNumber = tr.SubscriberAccountNumber "
+            f"WHERE {' AND '.join(where_clauses)}"
+            ") "
+            f"SELECT TOP {safe_limit} "
+            "LegacyAccountNumber, SubscriberAccountNumber, PhoneNumber, BillingCity, "
+            "ChurnProbability, PredictionMonth, Top1Feature, Top2Feature, Top3Feature "
+            "FROM ranked_accounts "
+            "WHERE account_rank = 1 "
+            "ORDER BY ChurnProbability DESC, "
+            "CASE WHEN BillingCity IS NULL OR LTRIM(RTRIM(BillingCity)) = '' THEN 1 ELSE 0 END, "
+            "BillingCity, SubscriberAccountNumber"
         )
         return self._fetch_rows(query, params, query_session=query_session)
 
@@ -347,6 +403,40 @@ class DashboardSqlClient:
                     modem_rows[modem_key] = row
         return modem_rows
 
+    def fetch_all_modem_health(self) -> dict[str, dict[str, Any]]:
+        """Fetch ALL modem health records from dashboard SQL as fallback when account-to-MAC mapping is sparse."""
+        query = (
+            "SELECT TOP 5000 "
+            "ModemMac AS mac, "
+            "ModemMac AS normalized_mac_key, "
+            "IP AS ip, "
+            "LastSeen AS tstamp, "
+            "USINT AS usint, "
+            "Status AS status, "
+            "State AS state, "
+            "USRXLVL AS usrxlvl, "
+            "USTXPWR AS ustxpwr, "
+            "USRXSNR AS usrxsnr, "
+            "DSRXLVL AS dsrxlvl, "
+            "DSRXSNR AS dsrxsnr, "
+            "DSPREFEC AS dsprefec, "
+            "DSPOSTFEC AS dspostfec, "
+            "DSBW AS dsbw, "
+            "USBW AS usbw, "
+            "FiberNode AS fibernode, "
+            "CMTS AS cmts "
+            f"FROM {self._qualified_table(self.modem_health_table)} "
+            "WHERE IP <> '0.0.0.0' "
+            "ORDER BY LastSeen DESC"
+        )
+        modem_rows: dict[str, dict[str, Any]] = {}
+        for row in self._fetch_dict_rows(query, query_session=None):
+            modem_key = self.normalize_mac_key(row.get("normalized_mac_key") or row.get("mac"))
+            if modem_key:
+                modem_rows[modem_key] = row
+        logger.info("Loaded all modem health records as fallback. count=%s", len(modem_rows))
+        return modem_rows
+
     def _fetch_rows(
         self,
         query: str,
@@ -363,6 +453,7 @@ class DashboardSqlClient:
         cursor = None
         try:
             connection = self._open_connection()
+            connection.timeout = self.timeout_seconds
             cursor = connection.cursor()
             cursor.execute(query, *(params or []))
             return [tuple(row) for row in cursor.fetchall()]
@@ -393,6 +484,7 @@ class DashboardSqlClient:
         cursor = None
         try:
             connection = self._open_connection()
+            connection.timeout = self.timeout_seconds
             cursor = connection.cursor()
             cursor.execute(query, *(params or []))
             column_names = [column[0] for column in cursor.description]
