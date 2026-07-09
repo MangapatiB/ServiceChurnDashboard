@@ -12,6 +12,7 @@ const customerSortInput = document.getElementById("customer-sort-select");
 
 const state = {
   endpoint: "/api/dashboard",
+  customerEndpoint: "/api/dashboard/customers",
   refreshSeconds: Number(bootstrap.refreshSeconds || 60),
   segment: bootstrap.currentSegment || "res",
   location: bootstrap.currentLocation || "",
@@ -39,6 +40,80 @@ function buildSnapshotCacheKey(pageIndex = state.customerPage) {
 
 function clearSnapshotCache() {
   state.pageCache.clear();
+}
+
+function updateHistoryParams() {
+  const nextUrl = new URL(window.location.href);
+  nextUrl.searchParams.set("segment", state.segment);
+  nextUrl.searchParams.set("limit", String(state.limit));
+  nextUrl.searchParams.set("customer_page", String(state.customerPage + 1));
+  nextUrl.searchParams.set("customer_page_size", String(state.customerPageSize));
+  nextUrl.searchParams.set("customer_sort", state.customerSort);
+  if (state.location) {
+    nextUrl.searchParams.set("location", state.location);
+  } else {
+    nextUrl.searchParams.delete("location");
+  }
+  window.history.replaceState({}, "", nextUrl);
+}
+
+function applySnapshotResponse(payload, options = {}) {
+  const { customersOnly = false } = options;
+  if (customersOnly) {
+    const previousSnapshot = state.snapshot || {};
+    state.snapshot = {
+      ...previousSnapshot,
+      meta: {
+        ...(previousSnapshot.meta || {}),
+        ...(payload?.meta || {}),
+      },
+      high_risk_customers: payload?.high_risk_customers || [],
+    };
+    const responsePage = Math.max(Number(state.snapshot?.meta?.customer_page || (state.customerPage + 1)), 1);
+    state.customerPage = responsePage - 1;
+    renderCustomers(state.snapshot.high_risk_customers || []);
+    return;
+  }
+
+  state.snapshot = payload;
+  const responsePage = Math.max(Number(state.snapshot?.meta?.customer_page || (state.customerPage + 1)), 1);
+  state.customerPage = responsePage - 1;
+  render(state.snapshot);
+}
+
+function prefetchCustomerPage(pageIndex) {
+  const totalPages = Math.max(Number(state.snapshot?.meta?.customer_total_pages || 1), 1);
+  if (pageIndex < 0 || pageIndex >= totalPages) {
+    return;
+  }
+  const cacheKey = buildSnapshotCacheKey(pageIndex);
+  if (state.pageCache.has(cacheKey)) {
+    return;
+  }
+
+  const params = new URLSearchParams({
+    segment: state.segment,
+    location: state.location,
+    limit: String(clampLimit(state.limit)),
+    customer_page: String(pageIndex + 1),
+    customer_page_size: String(state.customerPageSize),
+    customer_sort: state.customerSort,
+  });
+  fetch(`${state.customerEndpoint}?${params.toString()}`, { headers: { Accept: "application/json" } })
+    .then((response) => {
+      if (!response.ok) {
+        return null;
+      }
+      return response.json();
+    })
+    .then((payload) => {
+      if (payload) {
+        state.pageCache.set(cacheKey, payload);
+      }
+    })
+    .catch(() => {
+      // Prefetch is best-effort and should not affect user flows.
+    });
 }
 
 function clampLimit(value) {
@@ -475,14 +550,14 @@ async function fetchSnapshot(options = {}) {
   const {
     showFilterLoading = true,
     allowCachedPage = true,
+    customersOnly = false,
   } = options;
 
   const cacheKey = buildSnapshotCacheKey();
   if (allowCachedPage && state.pageCache.has(cacheKey)) {
-    state.snapshot = state.pageCache.get(cacheKey);
-    const responsePage = Math.max(Number(state.snapshot?.meta?.customer_page || (state.customerPage + 1)), 1);
-    state.customerPage = responsePage - 1;
-    render(state.snapshot);
+    applySnapshotResponse(state.pageCache.get(cacheKey), { customersOnly });
+    updateHistoryParams();
+    prefetchCustomerPage(state.customerPage + 1);
     return;
   }
 
@@ -504,27 +579,16 @@ async function fetchSnapshot(options = {}) {
       customer_page_size: String(state.customerPageSize),
       customer_sort: state.customerSort,
     });
-    const response = await fetch(`${state.endpoint}?${params.toString()}`, { headers: { Accept: "application/json" } });
+    const endpoint = customersOnly ? state.customerEndpoint : state.endpoint;
+    const response = await fetch(`${endpoint}?${params.toString()}`, { headers: { Accept: "application/json" } });
     if (!response.ok) {
       throw new Error(`Dashboard request failed with status ${response.status}`);
     }
-    state.snapshot = await response.json();
-    state.pageCache.set(cacheKey, state.snapshot);
-    const responsePage = Math.max(Number(state.snapshot?.meta?.customer_page || (state.customerPage + 1)), 1);
-    state.customerPage = responsePage - 1;
-    render(state.snapshot);
-    const nextUrl = new URL(window.location.href);
-    nextUrl.searchParams.set("segment", state.segment);
-    nextUrl.searchParams.set("limit", String(state.limit));
-    nextUrl.searchParams.set("customer_page", String(state.customerPage + 1));
-    nextUrl.searchParams.set("customer_page_size", String(state.customerPageSize));
-    nextUrl.searchParams.set("customer_sort", state.customerSort);
-    if (state.location) {
-      nextUrl.searchParams.set("location", state.location);
-    } else {
-      nextUrl.searchParams.delete("location");
-    }
-    window.history.replaceState({}, "", nextUrl);
+    const payload = await response.json();
+    state.pageCache.set(cacheKey, payload);
+    applySnapshotResponse(payload, { customersOnly });
+    updateHistoryParams();
+    prefetchCustomerPage(state.customerPage + 1);
   } catch (error) {
     console.error(error);
     const statusMessage = document.getElementById("status-message");
@@ -562,7 +626,7 @@ customerPrevButton?.addEventListener("click", () => {
     return;
   }
   state.customerPage -= 1;
-  fetchSnapshot({ showFilterLoading: false, allowCachedPage: true });
+  fetchSnapshot({ showFilterLoading: false, allowCachedPage: true, customersOnly: true });
 });
 
 customerNextButton?.addEventListener("click", () => {
@@ -572,7 +636,7 @@ customerNextButton?.addEventListener("click", () => {
     return;
   }
   state.customerPage += 1;
-  fetchSnapshot({ showFilterLoading: false, allowCachedPage: true });
+  fetchSnapshot({ showFilterLoading: false, allowCachedPage: true, customersOnly: true });
 });
 
 customerSortInput?.addEventListener("change", (event) => {

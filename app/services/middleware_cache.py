@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import logging
+import time
 from threading import RLock
 from typing import Any
 
@@ -13,12 +14,20 @@ logger = logging.getLogger(__name__)
 class MiddlewareDataCache:
     def __init__(self, config: dict[str, Any]):
         self.refresh_interval = timedelta(seconds=int(config.get("MODEM_HEALTH_REFRESH_SECONDS", 3600)))
+        self.retry_chunk_size = int(config.get("MODEM_ENRICH_RETRY_CHUNK_SIZE", 200))
+        self.retry_max_chunks = int(config.get("MODEM_ENRICH_RETRY_MAX_CHUNKS", 15))
+        self.retry_time_budget_seconds = float(config.get("MODEM_ENRICH_RETRY_TIME_BUDGET_SECONDS", 20))
         self.dashboard_sql_client = DashboardSqlClient(config)
         self._lock = RLock()
         self._account_mac_cache: dict[str, str] = {}
         self._account_mac_refreshed_at: datetime | None = None
         self._modem_health_cache: dict[str, dict[str, Any]] = {}
         self._modem_health_refreshed_at: dict[str, datetime] = {}
+
+    @staticmethod
+    def _iter_chunks(items: list[str], chunk_size: int) -> list[list[str]]:
+        safe_chunk_size = max(int(chunk_size or 1), 1)
+        return [items[index:index + safe_chunk_size] for index in range(0, len(items), safe_chunk_size)]
 
     def get_modem_health_by_account(
         self,
@@ -88,10 +97,40 @@ class MiddlewareDataCache:
                 }
 
             refresh_accounts = missing_accounts if cache_is_fresh else account_numbers
-            refreshed_cache = self.dashboard_sql_client.fetch_account_mac_map(
-                refresh_accounts,
-                query_session=query_session,
-            )
+            refreshed_cache: dict[str, str] = {}
+            try:
+                refreshed_cache = self.dashboard_sql_client.fetch_account_mac_map(
+                    refresh_accounts,
+                    query_session=query_session,
+                )
+            except Exception:  # noqa: BLE001
+                # If a large lookup times out, retry in smaller batches and keep partial success.
+                logger.exception(
+                    "Account-to-MAC bulk refresh failed for %s accounts; retrying in smaller chunks.",
+                    len(refresh_accounts),
+                )
+                retry_started = time.monotonic()
+                for index, chunk in enumerate(self._iter_chunks(refresh_accounts, self.retry_chunk_size), start=1):
+                    if index > self.retry_max_chunks or (time.monotonic() - retry_started) >= self.retry_time_budget_seconds:
+                        logger.warning(
+                            "Stopping account-to-MAC chunk retries early. processed_chunks=%s max_chunks=%s elapsed_seconds=%.2f",
+                            index - 1,
+                            self.retry_max_chunks,
+                            time.monotonic() - retry_started,
+                        )
+                        break
+                    try:
+                        refreshed_cache.update(
+                            self.dashboard_sql_client.fetch_account_mac_map(
+                                chunk,
+                                query_session=query_session,
+                            )
+                        )
+                    except Exception:  # noqa: BLE001
+                        logger.exception(
+                            "Account-to-MAC chunk refresh failed. chunk_size=%s",
+                            len(chunk),
+                        )
             self._account_mac_cache.update(refreshed_cache)
             self._account_mac_refreshed_at = datetime.utcnow()
             logger.info("Refreshed middleware account-to-modem cache. row_count=%s", len(refreshed_cache))
@@ -114,10 +153,40 @@ class MiddlewareDataCache:
                 stale_macs.append(mac_address)
 
         if stale_macs:
-            fetched_rows = self.dashboard_sql_client.fetch_latest_modem_health(
-                stale_macs,
-                query_session=query_session,
-            )
+            fetched_rows: dict[str, dict[str, Any]] = {}
+            try:
+                fetched_rows = self.dashboard_sql_client.fetch_latest_modem_health(
+                    stale_macs,
+                    query_session=query_session,
+                )
+            except Exception:  # noqa: BLE001
+                # If a large modem batch times out, retry in smaller chunks and keep partial success.
+                logger.exception(
+                    "Modem-health bulk refresh failed for %s MACs; retrying in smaller chunks.",
+                    len(stale_macs),
+                )
+                retry_started = time.monotonic()
+                for index, chunk in enumerate(self._iter_chunks(stale_macs, self.retry_chunk_size), start=1):
+                    if index > self.retry_max_chunks or (time.monotonic() - retry_started) >= self.retry_time_budget_seconds:
+                        logger.warning(
+                            "Stopping modem-health chunk retries early. processed_chunks=%s max_chunks=%s elapsed_seconds=%.2f",
+                            index - 1,
+                            self.retry_max_chunks,
+                            time.monotonic() - retry_started,
+                        )
+                        break
+                    try:
+                        fetched_rows.update(
+                            self.dashboard_sql_client.fetch_latest_modem_health(
+                                chunk,
+                                query_session=query_session,
+                            )
+                        )
+                    except Exception:  # noqa: BLE001
+                        logger.exception(
+                            "Modem-health chunk refresh failed. chunk_size=%s",
+                            len(chunk),
+                        )
             with self._lock:
                 for mac_address, row in fetched_rows.items():
                     self._modem_health_cache[mac_address] = row

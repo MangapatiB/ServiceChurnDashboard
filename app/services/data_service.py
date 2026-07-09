@@ -30,6 +30,7 @@ class DashboardDataService:
         self.modem_panel_scan_limit = int(config.get("MODEM_PANEL_SCAN_LIMIT", 10000))
         self.modem_panel_max_rows = int(config.get("MODEM_PANEL_MAX_ROWS", 250))
         self._snapshot_cache: dict[tuple[str, str, int, str], tuple[float, dict[str, Any]]] = {}
+        self._customer_page_cache: dict[tuple[str, str, int, str, int, int, str], tuple[float, dict[str, Any]]] = {}
         self._call_data_cache: dict[tuple[str, str, int, str, int, int], tuple[float, dict[str, Any]]] = {}
         self._cache_lock = RLock()
 
@@ -148,6 +149,252 @@ class DashboardDataService:
         except Exception:  # noqa: BLE001
             logger.exception("Failed to load live location options. Falling back to mock locations.")
             return get_mock_locations()
+
+    def get_dashboard_customer_page(
+        self,
+        location: str = "",
+        limit: int | None = None,
+        customer_segment: str = "res",
+        customer_page: int | None = None,
+        customer_page_size: int | None = None,
+        customer_sort: str = "desc",
+        query_session=None,
+    ) -> dict[str, Any]:
+        mode = self.config.get("DATA_SOURCE_MODE", "mock")
+        safe_limit = normalize_limit(limit, default=self.config.get("HIGH_RISK_LIMIT", 12))
+        safe_location = sanitize_location(location)
+        safe_segment = normalize_customer_segment(customer_segment)
+        safe_customer_page = normalize_limit(customer_page, default=1, minimum=1, maximum=100000)
+        safe_customer_page_size = normalize_limit(
+            customer_page_size,
+            default=int(self.config.get("DASHBOARD_CUSTOMER_PAGE_SIZE", 15)),
+            minimum=1,
+            maximum=250,
+        )
+        safe_customer_sort = "asc" if str(customer_sort).strip().lower() == "asc" else "desc"
+
+        if mode != "live":
+            snapshot = build_mock_snapshot()
+            customers = list(snapshot.get("high_risk_customers", []))
+            customers.sort(
+                key=lambda item: (
+                    float(item.get("churn_probability") or 0),
+                    str(item.get("customer_id") or ""),
+                ),
+                reverse=(safe_customer_sort != "asc"),
+            )
+            selected_customers = customers[:safe_limit]
+            total_customers = len(selected_customers)
+            total_customer_pages = max((total_customers + safe_customer_page_size - 1) // safe_customer_page_size, 1)
+            effective_customer_page = min(safe_customer_page, total_customer_pages)
+            customer_start_index = (effective_customer_page - 1) * safe_customer_page_size
+            customer_end_index = customer_start_index + safe_customer_page_size
+            return {
+                "meta": {
+                    "source": "mock",
+                    "status": "healthy",
+                    "location": safe_location or "ALL LOCATIONS",
+                    "limit": safe_limit,
+                    "customer_segment": safe_segment,
+                    "last_updated": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
+                    "message": "Mock customer page data.",
+                    "customer_page": effective_customer_page,
+                    "customer_page_size": safe_customer_page_size,
+                    "customer_total_records": total_customers,
+                    "customer_total_pages": total_customer_pages,
+                    "customer_row_start": customer_start_index + 1 if total_customers else 0,
+                    "customer_row_end": min(customer_end_index, total_customers) if total_customers else 0,
+                    "customer_sort": safe_customer_sort,
+                },
+                "high_risk_customers": selected_customers[customer_start_index:customer_end_index],
+            }
+
+        cache_key = (
+            "dashboard-customers",
+            safe_location,
+            safe_limit,
+            safe_segment,
+            safe_customer_page,
+            safe_customer_page_size,
+            safe_customer_sort,
+        )
+        cached_customer_page = self._cache_get(self._customer_page_cache, cache_key)
+        if cached_customer_page is not None:
+            return cached_customer_page
+
+        try:
+            session_context = self.client.open_session() if query_session is None else nullcontext(query_session)
+            with session_context as session:
+                dashboard_customer_rows = self.client.fetch_dashboard_customer_rows(
+                    safe_location,
+                    safe_limit,
+                    safe_segment,
+                    query_session=session,
+                )
+                customer_page_payload = self._build_customer_page_payload(
+                    dashboard_customer_rows=dashboard_customer_rows,
+                    location=safe_location,
+                    limit=safe_limit,
+                    customer_segment=safe_segment,
+                    customer_page=safe_customer_page,
+                    customer_page_size=safe_customer_page_size,
+                    customer_sort=safe_customer_sort,
+                    query_session=session,
+                )
+            self._cache_put(
+                self._customer_page_cache,
+                cache_key,
+                customer_page_payload,
+                self.snapshot_cache_seconds,
+            )
+            return customer_page_payload
+        except Exception as exc:  # noqa: BLE001
+            logger.exception(
+                "Failed to build live dashboard customer page. location=%s limit=%s segment=%s",
+                safe_location or "ALL LOCATIONS",
+                safe_limit,
+                safe_segment,
+            )
+            return {
+                "meta": {
+                    "source": "fallback",
+                    "status": "degraded",
+                    "location": safe_location or "ALL LOCATIONS",
+                    "limit": safe_limit,
+                    "customer_segment": safe_segment,
+                    "last_updated": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
+                    "message": f"Live customer page query failed: {exc}",
+                    "customer_page": 1,
+                    "customer_page_size": safe_customer_page_size,
+                    "customer_total_records": 0,
+                    "customer_total_pages": 1,
+                    "customer_row_start": 0,
+                    "customer_row_end": 0,
+                    "customer_sort": safe_customer_sort,
+                },
+                "high_risk_customers": [],
+            }
+
+    def _build_customer_page_payload(
+        self,
+        dashboard_customer_rows: list[Any],
+        location: str,
+        limit: int,
+        customer_segment: str,
+        customer_page: int,
+        customer_page_size: int,
+        customer_sort: str,
+        query_session=None,
+    ) -> dict[str, Any]:
+        if not dashboard_customer_rows:
+            return {
+                "meta": {
+                    "source": "live",
+                    "status": "empty",
+                    "location": location or "ALL LOCATIONS",
+                    "limit": limit,
+                    "customer_segment": customer_segment,
+                    "last_updated": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
+                    "message": "No truckroll-flagged, contactable accounts matched the current filter.",
+                    "customer_page": 1,
+                    "customer_page_size": customer_page_size,
+                    "customer_total_records": 0,
+                    "customer_total_pages": 1,
+                    "customer_row_start": 0,
+                    "customer_row_end": 0,
+                    "customer_sort": customer_sort,
+                },
+                "high_risk_customers": [],
+            }
+
+        customers = []
+        for row in dashboard_customer_rows:
+            truckroll_record = self._coerce_truckroll_row(row[:4])
+            churn_record = self._coerce_churn_row((row[1], row[4], row[5], row[6], row[7], row[8]))
+            features = [feature for feature in churn_record.get("features", []) if feature]
+            churn_probability = float(churn_record.get("risk_score", 0))
+            risk_score = int(round(churn_probability))
+            customers.append(
+                {
+                    "legacy_account_number": truckroll_record["legacy_account_number"],
+                    "customer_id": truckroll_record["customer_id"],
+                    "geo": truckroll_record["geo"],
+                    "churn_probability": round(churn_probability, 1),
+                    "risk_score": risk_score,
+                    "drivers": ", ".join(features) if features else "Truck roll flagged",
+                    "last_event": "Truck roll prediction triggered",
+                    "next_action": self._recommend_action(risk_score),
+                    "phone_number": truckroll_record["phone_number"],
+                    "modem_mac": "",
+                    "modem_ip": "",
+                    "modem_last_seen": "",
+                    "modem_usint": "",
+                    "modem_status": "Unavailable",
+                    "modem_state": "Unavailable",
+                    "modem_usrxlvl": "",
+                    "modem_ustxpwr": "",
+                    "modem_usrxsnr": "",
+                    "modem_dsrxlvl": "",
+                    "modem_dsrxsnr": "",
+                    "modem_dsprefec": "",
+                    "modem_dspostfec": "",
+                    "modem_dsbw": "",
+                    "modem_usbw": "",
+                    "fiber_node": "",
+                    "cmts": "",
+                    "calls_6m": 0,
+                    "calls_12m": 0,
+                    "repeat_calls_12m": False,
+                    "triple_calls_12m": False,
+                    "modem_health": {},
+                }
+            )
+
+        customers.sort(
+            key=lambda item: (item["risk_score"], item.get("customer_id", "")),
+            reverse=(customer_sort != "asc"),
+        )
+        unique_customers = []
+        seen_customer_keys: set[tuple[str, str]] = set()
+        for customer in customers:
+            dedupe_key = (
+                str(customer.get("customer_id") or "").strip(),
+                str(customer.get("legacy_account_number") or "").strip(),
+            )
+            if dedupe_key in seen_customer_keys:
+                continue
+            seen_customer_keys.add(dedupe_key)
+            unique_customers.append(customer)
+
+        selected_customers = unique_customers[:limit]
+        total_customers = len(selected_customers)
+        total_customer_pages = max((total_customers + customer_page_size - 1) // customer_page_size, 1)
+        effective_customer_page = min(customer_page, total_customer_pages)
+        customer_start_index = (effective_customer_page - 1) * customer_page_size
+        customer_end_index = customer_start_index + customer_page_size
+        paged_customers = selected_customers[customer_start_index:customer_end_index]
+
+        self._enrich_customers_with_modem_health(paged_customers, query_session=query_session)
+
+        return {
+            "meta": {
+                "source": "live",
+                "status": "healthy",
+                "location": location or "ALL LOCATIONS",
+                "limit": limit,
+                "customer_segment": customer_segment,
+                "last_updated": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
+                "message": f"Live customer page built from ServiceChurnDashboard SQL tables for {location or 'ALL LOCATIONS'}.",
+                "customer_page": effective_customer_page,
+                "customer_page_size": customer_page_size,
+                "customer_total_records": total_customers,
+                "customer_total_pages": total_customer_pages,
+                "customer_row_start": customer_start_index + 1 if total_customers else 0,
+                "customer_row_end": min(customer_end_index, total_customers) if total_customers else 0,
+                "customer_sort": customer_sort,
+            },
+            "high_risk_customers": paged_customers,
+        }
 
     def _load_call_rows(
         self,
