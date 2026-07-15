@@ -1332,7 +1332,7 @@ textarea {
 }
 
 .dashboard-table--customers {
-  min-width: 1260px;
+  min-width: 1360px;
   table-layout: fixed;
 }
 
@@ -1376,35 +1376,35 @@ textarea {
 }
 
 .customer-col--id {
-  width: 15%;
+  width: 13%;
 }
 
 .customer-col--geo {
-  width: 10%;
-}
-
-.customer-col--phone {
-  width: 11%;
-}
-
-.customer-col--email {
-  width: 16%;
-}
-
-.customer-col--risk {
   width: 9%;
 }
 
+.customer-col--phone {
+  width: 10%;
+}
+
+.customer-col--email {
+  width: 17%;
+}
+
+.customer-col--risk {
+  width: 8%;
+}
+
 .customer-col--drivers {
-  width: 22%;
+  width: 23%;
 }
 
 .customer-col--event {
-  width: 14%;
+  width: 11%;
 }
 
 .customer-col--action {
-  width: 13%;
+  width: 9%;
 }
 
 .dashboard-table--customers th,
@@ -1434,13 +1434,15 @@ textarea {
   text-align: left;
 }
 
+.customer-col-cell--id,
 .customer-col-cell--geo,
 .customer-col-cell--phone,
 .customer-col-cell--email,
 .customer-col-cell--risk,
+.customer-col-cell--drivers,
 .customer-col-cell--event,
 .customer-col-cell--action {
-  vertical-align: middle;
+  vertical-align: top;
 }
 
 .customer-cell--geo,
@@ -1492,6 +1494,8 @@ textarea {
   font-size: 11px;
   line-height: 1.45;
   color: var(--ink-strong);
+  word-break: break-word;
+  text-transform: lowercase;
 }
 
 .customer-cell--geo {
