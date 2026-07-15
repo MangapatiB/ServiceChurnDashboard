@@ -1332,13 +1332,13 @@ textarea {
 }
 
 .dashboard-table--customers {
-  min-width: 1360px;
+  min-width: 100%;
   table-layout: fixed;
 }
 
 .dashboard-table th,
 .dashboard-table td {
-  padding: 10px 8px;
+  padding: 9px 6px;
   text-align: left;
   vertical-align: top;
   border-bottom: 1px solid rgba(17, 38, 45, 0.08);
@@ -1376,19 +1376,19 @@ textarea {
 }
 
 .customer-col--id {
-  width: 13%;
+  width: 11%;
 }
 
 .customer-col--geo {
-  width: 9%;
-}
-
-.customer-col--phone {
   width: 10%;
 }
 
+.customer-col--phone {
+  width: 8%;
+}
+
 .customer-col--email {
-  width: 17%;
+  width: 14%;
 }
 
 .customer-col--risk {
@@ -1396,15 +1396,15 @@ textarea {
 }
 
 .customer-col--drivers {
-  width: 23%;
+  width: 26%;
 }
 
 .customer-col--event {
-  width: 11%;
+  width: 13%;
 }
 
 .customer-col--action {
-  width: 9%;
+  width: 10%;
 }
 
 .dashboard-table--customers th,
@@ -1446,15 +1446,18 @@ textarea {
 }
 
 .customer-cell--geo,
-.customer-cell--event,
-.customer-cell--action,
 .customer-risk {
   white-space: nowrap;
 }
 
-.customer-head--risk,
 .customer-col-cell--risk {
   white-space: nowrap;
+}
+
+.customer-head--risk {
+  white-space: normal;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
 }
 
 .customer-head--id,
@@ -1473,8 +1476,8 @@ textarea {
 .customer-col-cell--drivers,
 .customer-col-cell--event,
 .customer-col-cell--action {
-  padding-left: 10px;
-  padding-right: 10px;
+  padding-left: 6px;
+  padding-right: 6px;
 }
 
 .customer-cell {
@@ -1508,6 +1511,8 @@ textarea {
 .customer-cell--event,
 .customer-cell--action {
   line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .customer-cell--drivers {
