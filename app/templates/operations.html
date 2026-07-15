@@ -72,13 +72,24 @@
                     <h2>Market watchlist summary</h2>
                     <p class="panel__description">Review geo concentration first to spot where churn pressure is clustering and which team should intervene next.</p>
                 </div>
-                <label class="table-toolbar__label" for="geo-tier-sort-select">
-                    <span>Tier</span>
-                    <select class="table-toolbar__select" id="geo-tier-sort-select" aria-label="Sort markets by tier">
-                        <option value="asc">Asc</option>
-                        <option value="desc">Desc</option>
-                    </select>
-                </label>
+                <div class="table-pagination__actions table-pagination__actions--operations">
+                    <div class="export-control">
+                        <a
+                            class="export-button"
+                            href="{{ url_for('dashboard.operations_export_api', segment=current_segment, location=current_location, limit=current_limit) }}"
+                            title="Export operations watchlist as CSV"
+                            data-export-key="operations_last_export_timestamp"
+                        >Export</a>
+                        <span class="export-timestamp">Last downloaded: --</span>
+                    </div>
+                    <label class="table-toolbar__label" for="geo-tier-sort-select">
+                        <span>Tier</span>
+                        <select class="table-toolbar__select" id="geo-tier-sort-select" aria-label="Sort markets by tier">
+                            <option value="asc">Asc</option>
+                            <option value="desc">Desc</option>
+                        </select>
+                    </label>
+                </div>
             </div>
             <div class="table-wrap">
                 <table class="dashboard-table dashboard-table--geo">

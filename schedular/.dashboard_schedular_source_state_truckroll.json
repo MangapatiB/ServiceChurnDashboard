@@ -1,0 +1,8 @@
+{
+  "source_fingerprints": {
+    "dbo.service_churn_truckroll_base": {
+      "row_count": 56912,
+      "hash_total": "523265141898156846036843"
+    }
+  }
+}

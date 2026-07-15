@@ -86,7 +86,8 @@
                     <p class="panel__description">These customers are the fastest path from signal review to immediate action, so the table keeps contactability and next-step guidance in one place.</p>
                 </div>
                 <div class="table-pagination" id="customer-pagination">
-                    <div class="table-pagination__actions table-pagination__actions--stacked">
+                    <div class="customer-toolbar customer-toolbar--offset">
+                        <button class="export-button" id="export-button" type="button" title="Export filtered customer data as CSV" data-export-key="dashboard_last_export_timestamp" data-export-track="manual">&#8595; Export CSV</button>
                         <label class="table-toolbar__label" for="customer-sort-select">
                             <span>Churn probability</span>
                             <select class="table-toolbar__select" id="customer-sort-select" aria-label="Sort customers by churn probability">
@@ -94,11 +95,14 @@
                                 <option value="asc">Asc</option>
                             </select>
                         </label>
+                    </div>
+                    <div class="customer-meta-row">
+                        <span class="export-timestamp" id="export-timestamp">Last downloaded: --</span>
                         <p class="table-pagination__summary" id="customer-pagination-summary">Showing 0-0 of 0 accounts</p>
-                        <div class="table-pagination__button-row">
-                            <button class="pagination-button" id="customer-prev-button" type="button">Previous 15</button>
-                            <button class="pagination-button" id="customer-next-button" type="button">Next 15</button>
-                        </div>
+                    </div>
+                    <div class="table-pagination__button-row">
+                        <button class="pagination-button" id="customer-prev-button" type="button">Previous 15</button>
+                        <button class="pagination-button" id="customer-next-button" type="button">Next 15</button>
                     </div>
                 </div>
             </div>
@@ -108,6 +112,7 @@
                         <col class="customer-col customer-col--id">
                         <col class="customer-col customer-col--geo">
                         <col class="customer-col customer-col--phone">
+                        <col class="customer-col customer-col--email">
                         <col class="customer-col customer-col--risk">
                         <col class="customer-col customer-col--drivers">
                         <col class="customer-col customer-col--event">
@@ -118,6 +123,7 @@
                             <th class="customer-head customer-head--id">Customer ID</th>
                             <th class="customer-head customer-head--geo">Geo</th>
                             <th class="customer-head customer-head--phone">Phone</th>
+                            <th class="customer-head customer-head--email">Email</th>
                             <th class="customer-head customer-head--risk">Churn probability</th>
                             <th class="customer-head customer-head--drivers">Drivers</th>
                             <th class="customer-head customer-head--event">Last event</th>

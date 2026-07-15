@@ -309,8 +309,8 @@ class DashboardDataService:
 
         customers = []
         for row in dashboard_customer_rows:
-            truckroll_record = self._coerce_truckroll_row(row[:4])
-            churn_record = self._coerce_churn_row((row[1], row[4], row[5], row[6], row[7], row[8]))
+            truckroll_record = self._coerce_truckroll_row(row[:5])
+            churn_record = self._coerce_churn_row((row[1], row[5], row[6], row[7], row[8], row[9]))
             features = [feature for feature in churn_record.get("features", []) if feature]
             churn_probability = float(churn_record.get("risk_score", 0))
             risk_score = int(round(churn_probability))
@@ -325,6 +325,7 @@ class DashboardDataService:
                     "last_event": "Truck roll prediction triggered",
                     "next_action": self._recommend_action(risk_score),
                     "phone_number": truckroll_record["phone_number"],
+                    "email_address": truckroll_record["email_address"],
                     "modem_mac": "",
                     "modem_ip": "",
                     "modem_last_seen": "",
@@ -395,6 +396,105 @@ class DashboardDataService:
             },
             "high_risk_customers": paged_customers,
         }
+
+    def get_all_filtered_customers(
+        self,
+        location: str = "",
+        limit: int | None = None,
+        customer_segment: str = "res",
+        customer_sort: str = "desc",
+        query_session=None,
+    ) -> dict[str, Any]:
+        """Get all filtered customers (without pagination) for export."""
+        mode = self.config.get("DATA_SOURCE_MODE", "mock")
+        safe_limit = normalize_limit(limit, default=self.config.get("HIGH_RISK_LIMIT", 12))
+        safe_location = sanitize_location(location)
+        safe_segment = normalize_customer_segment(customer_segment)
+        safe_customer_sort = "asc" if str(customer_sort).strip().lower() == "asc" else "desc"
+
+        if mode != "live":
+            snapshot = build_mock_snapshot()
+            customers = list(snapshot.get("high_risk_customers", []))
+            customers.sort(
+                key=lambda item: (
+                    float(item.get("churn_probability") or 0),
+                    str(item.get("customer_id") or ""),
+                ),
+                reverse=(safe_customer_sort != "asc"),
+            )
+            return {
+                "customers": customers[:safe_limit],
+            }
+
+        try:
+            session_context = self.client.open_session() if query_session is None else nullcontext(query_session)
+            with session_context as session:
+                dashboard_customer_rows = self.client.fetch_dashboard_customer_rows(
+                    safe_location,
+                    safe_limit,
+                    safe_segment,
+                    query_session=session,
+                )
+
+                if not dashboard_customer_rows:
+                    return {"customers": []}
+
+                customers = []
+                for row in dashboard_customer_rows:
+                    truckroll_record = self._coerce_truckroll_row(row[:5])
+                    churn_record = self._coerce_churn_row((row[1], row[5], row[6], row[7], row[8], row[9]))
+                    features = [feature for feature in churn_record.get("features", []) if feature]
+                    churn_probability = float(churn_record.get("risk_score", 0))
+                    risk_score = int(round(churn_probability))
+                    customers.append(
+                        {
+                            "customer_id": truckroll_record["customer_id"],
+                            "geo": truckroll_record["geo"],
+                            "phone_number": truckroll_record["phone_number"],
+                            "email_address": truckroll_record["email_address"],
+                            "churn_probability": churn_probability,
+                            "drivers": ", ".join(features) if features else "Truck roll flagged",
+                            "last_event": "Truck roll prediction triggered",
+                            "next_action": self._recommend_action(risk_score),
+                            "modem_model": "",
+                            "modem_health_score": "",
+                        }
+                    )
+
+                customers.sort(
+                    key=lambda item: (
+                        float(item.get("churn_probability", 0)),
+                        str(item.get("customer_id") or ""),
+                    ),
+                    reverse=(safe_customer_sort != "asc"),
+                )
+
+                unique_customers = []
+                seen_customer_keys: set[tuple[str, str]] = set()
+                for customer in customers:
+                    dedupe_key = (
+                        str(customer.get("customer_id") or "").strip(),
+                    )
+                    if dedupe_key in seen_customer_keys:
+                        continue
+                    seen_customer_keys.add(dedupe_key)
+                    unique_customers.append(customer)
+
+                selected_customers = unique_customers[:safe_limit]
+
+                # Enrich with modem health data
+                if selected_customers:
+                    self._enrich_customers_with_modem_health(selected_customers, query_session=session)
+
+                return {"customers": selected_customers}
+        except Exception as exc:  # noqa: BLE001
+            logger.exception(
+                "Failed to build live export customer list. location=%s limit=%s segment=%s",
+                safe_location or "ALL LOCATIONS",
+                safe_limit,
+                safe_segment,
+            )
+            return {"customers": []}
 
     def _load_call_rows(
         self,
@@ -611,8 +711,8 @@ class DashboardDataService:
         markets: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
 
         for row in dashboard_customer_rows:
-            truckroll_record = self._coerce_truckroll_row(row[:4])
-            churn_record = self._coerce_churn_row((row[1], row[4], row[5], row[6], row[7], row[8]))
+            truckroll_record = self._coerce_truckroll_row(row[:5])
+            churn_record = self._coerce_churn_row((row[1], row[5], row[6], row[7], row[8], row[9]))
             features = [feature for feature in churn_record.get("features", []) if feature]
             for feature in features:
                 signal_counter[feature] += 1
@@ -629,6 +729,7 @@ class DashboardDataService:
                 "last_event": "Truck roll prediction triggered",
                 "next_action": self._recommend_action(risk_score),
                 "phone_number": truckroll_record["phone_number"],
+                "email_address": truckroll_record["email_address"],
                 "modem_mac": "",
                 "modem_ip": "",
                 "modem_last_seen": "",
@@ -973,7 +1074,8 @@ class DashboardDataService:
             "legacy_account_number": DashboardDataService._normalize_account_number(row[0]) if len(row) > 0 else "",
             "customer_id": DashboardDataService._normalize_account_number(row[1]) if len(row) > 1 else "",
             "phone_number": str(row[2]) if len(row) > 2 and row[2] is not None else "",
-            "geo": str(row[3]) if len(row) > 3 and row[3] is not None else "UNKNOWN",
+            "email_address": str(row[3]) if len(row) > 3 and row[3] is not None else "",
+            "geo": str(row[4]) if len(row) > 4 and row[4] is not None else "UNKNOWN",
         }
 
     @staticmethod

@@ -85,6 +85,17 @@
                     <h2>Call data records</h2>
                     <p class="panel__description">Showing accounts {{ call_data.meta.page_row_start }}-{{ call_data.meta.page_row_end }} of {{ call_data.meta.total_records }} (returned records: {{ call_data.rows|length }}) for {{ call_data.meta.location }} · {{ 'Business' if current_segment == 'com' else 'Residential' }} · limit {{ current_limit }}.</p>
                 </div>
+                <div class="table-pagination__actions">
+                    <div class="export-control">
+                        <a
+                            class="export-button"
+                            href="{{ url_for('dashboard.call_data_export_api', segment=current_segment, location=current_location, limit=current_limit, page=call_data.meta.page, page_size=current_page_size) }}"
+                            title="Export call data records as CSV"
+                            data-export-key="call_data_last_export_timestamp"
+                        >Export</a>
+                        <span class="export-timestamp">Last downloaded: --</span>
+                    </div>
+                </div>
             </div>
             <div class="table-wrap">
                 <table class="dashboard-table">

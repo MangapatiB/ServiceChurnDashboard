@@ -84,7 +84,7 @@ WITH TR AS (
     FROM prod.bronze.truckrollautomation_truckrollpredictionsbatch
 ),
 SR AS (
-    SELECT DISTINCT LegacyAccountId, SubscriberAccountNumber, BillingCity
+    SELECT DISTINCT LegacyAccountId, SubscriberAccountNumber, BillingCity, CustomerEmailAddress
     FROM prod.silver.dnadatawarehouse_subscriberhistory
 ),
 HSD AS (
@@ -107,7 +107,8 @@ SELECT DISTINCT
     CAST(TRSR.accountnumber AS STRING) AS LegacyAccountNumber,
     CAST(TRSR.SubscriberAccountNumber AS STRING) AS SubscriberAccountNumber,
     CAST(PULSE.PhoneNumber AS STRING) AS PhoneNumber,
-    UPPER(TRSR.BillingCity) AS BillingCity
+    UPPER(TRSR.BillingCity) AS BillingCity,
+    CAST(TRSR.CustomerEmailAddress AS STRING) AS EmailAddress
 FROM TRSR
 LEFT JOIN HSD ON HSD.SubscriberAccountNumber = TRSR.SubscriberAccountNumber
 INNER JOIN prod.bronze.pulsedb_optin AS PULSE
@@ -2151,7 +2152,7 @@ def refresh_once():
         if not truckroll_skipped:
             truckroll_source_fingerprint = get_source_fingerprint(
                 TRUCKROLL_QUERY,
-                ["LegacyAccountNumber", "SubscriberAccountNumber", "PhoneNumber", "BillingCity"],
+                ["LegacyAccountNumber", "SubscriberAccountNumber", "PhoneNumber", "BillingCity", "EmailAddress"],
                 "truckroll",
             )
             truckroll_skipped = should_skip_unchanged_source(
@@ -2304,10 +2305,10 @@ def refresh_once():
                     target_cursor,
                     build_insert_sql(
                         truckroll_stage,
-                        ["LegacyAccountNumber", "SubscriberAccountNumber", "PhoneNumber", "BillingCity", "RefreshedAt"],
+                        ["LegacyAccountNumber", "SubscriberAccountNumber", "PhoneNumber", "BillingCity", "EmailAddress", "RefreshedAt"],
                     ).replace(
-                        "VALUES (?, ?, ?, ?, ?)",
-                        "VALUES (?, ?, ?, ?, SYSUTCDATETIME())",
+                        "VALUES (?, ?, ?, ?, ?, ?)",
+                        "VALUES (?, ?, ?, ?, ?, SYSUTCDATETIME())",
                     ),
                     truckroll_rows,
                     commit_connection=target,

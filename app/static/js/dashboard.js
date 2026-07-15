@@ -9,6 +9,8 @@ const customerPrevButton = document.getElementById("customer-prev-button");
 const customerNextButton = document.getElementById("customer-next-button");
 const customerPaginationSummary = document.getElementById("customer-pagination-summary");
 const customerSortInput = document.getElementById("customer-sort-select");
+const exportButton = document.getElementById("export-button");
+const exportTimestamp = document.getElementById("export-timestamp");
 
 const state = {
   endpoint: "/api/dashboard",
@@ -25,6 +27,7 @@ const state = {
   refreshTimerId: null,
   isFetching: false,
   pageCache: new Map(),
+  lastExportTimestamp: localStorage.getItem("dashboard_last_export_timestamp") || null,
 };
 
 function buildSnapshotCacheKey(pageIndex = state.customerPage) {
@@ -488,7 +491,7 @@ function renderCustomers(items) {
   }
   const sortedItems = getSortedCustomers(items);
   if (!sortedItems.length) {
-    container.innerHTML = tableEmptyRow("No high-risk customer rows match the current filter.", 7);
+    container.innerHTML = tableEmptyRow("No high-risk customer rows match the current filter.", 8);
     if (customerPaginationSummary) {
       customerPaginationSummary.textContent = "Showing 0-0 of 0 accounts · Page 0 of 0";
     }
@@ -524,6 +527,7 @@ function renderCustomers(items) {
       <td class="customer-col-cell customer-col-cell--id"><span class="customer-cell customer-cell--id">${escapeHtml(item.customer_id)}</span></td>
       <td class="customer-col-cell customer-col-cell--geo"><span class="customer-cell customer-cell--geo">${escapeHtml(item.geo)}</span></td>
       <td class="customer-col-cell customer-col-cell--phone"><span class="customer-cell customer-cell--phone">${escapeHtml(item.phone_number || "-")}</span></td>
+      <td class="customer-col-cell customer-col-cell--email"><span class="customer-cell customer-cell--email">${escapeHtml(item.email_address || "-")}</span></td>
       <td class="customer-col-cell customer-col-cell--risk"><span class="customer-risk ${customerRiskBadgeClass(item.churn_probability)}">${escapeHtml(formatChurnProbability(item.churn_probability))}</span></td>
       <td class="customer-col-cell customer-col-cell--drivers"><span class="customer-cell customer-cell--drivers">${escapeHtml(item.drivers)}${item.modem_mac ? `<br><small>MAC ${escapeHtml(item.modem_mac)} · ${escapeHtml(item.modem_status || "Unavailable")}</small>` : ""}${item.fiber_node ? `<br><small>Node ${escapeHtml(item.fiber_node)}${item.cmts ? ` · CMTS ${escapeHtml(item.cmts)}` : ""}</small>` : item.cmts ? `<br><small>CMTS ${escapeHtml(item.cmts)}</small>` : ""}</span></td>
       <td class="customer-col-cell customer-col-cell--event"><span class="customer-cell customer-cell--event">${escapeHtml(item.last_event)}${item.modem_last_seen ? `<br><small>Seen ${escapeHtml(item.modem_last_seen)}</small>` : ""}</span></td>
@@ -645,6 +649,101 @@ customerSortInput?.addEventListener("change", (event) => {
   clearSnapshotCache();
   fetchSnapshot();
 });
+
+/**
+ * Format timestamp for display
+ */
+function formatExportTimestamp(timestamp) {
+  if (!timestamp) return "Last downloaded: --";
+  try {
+    const date = new Date(timestamp);
+    const dateStr = date.toLocaleDateString();
+    const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return `Last downloaded: ${dateStr} ${timeStr}`;
+  } catch {
+    return "Last downloaded: --";
+  }
+}
+
+/**
+ * Update export button with last exported timestamp
+ */
+function updateExportButtonDisplay() {
+  if (!exportButton || !exportTimestamp) return;
+  if (state.lastExportTimestamp) {
+    exportButton.textContent = "Export";
+    exportTimestamp.textContent = formatExportTimestamp(state.lastExportTimestamp);
+    exportButton.title = `Last exported: ${state.lastExportTimestamp}`;
+  } else {
+    exportButton.textContent = "Export";
+    exportTimestamp.textContent = "Last downloaded: --";
+    exportButton.title = "Export filtered customer data as CSV";
+  }
+}
+
+/**
+ * Export filtered customer data as CSV
+ */
+async function exportCustomerData() {
+  if (exportButton) {
+    exportButton.disabled = true;
+    exportButton.textContent = "Exporting...";
+  }
+
+  try {
+    const params = new URLSearchParams({
+      location: state.location,
+      limit: state.limit,
+      segment: state.segment,
+      customer_sort: state.customerSort,
+    });
+
+    const response = await fetch(`/api/dashboard/export?${params.toString()}`);
+    if (!response.ok) {
+      throw new Error(`Export failed: ${response.statusText}`);
+    }
+
+    // Get the filename from the response headers
+    const contentDisposition = response.headers.get("content-disposition");
+    let filename = "churn_dashboard_export.csv";
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename=([^;]+)/);
+      if (match) {
+        filename = match[1].replace(/"/g, "").trim();
+      }
+    }
+
+    // Convert response to blob and trigger download
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    // Update timestamp
+    const now = new Date().toISOString();
+    state.lastExportTimestamp = now;
+    localStorage.setItem("dashboard_last_export_timestamp", now);
+    updateExportButtonDisplay();
+  } catch (error) {
+    console.error("Export error:", error);
+    alert("Failed to export data. Please try again.");
+  } finally {
+    if (exportButton) {
+      exportButton.disabled = false;
+      updateExportButtonDisplay();
+    }
+  }
+}
+
+exportButton?.addEventListener("click", exportCustomerData);
+
+// Initialize export button display
+updateExportButtonDisplay();
 
 render(state.snapshot);
 setAutoRefreshInterval(state.refreshSeconds);

@@ -1,1 +1,62 @@
-2026-07-02 11:27:44 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-15 09:40:09 | INFO | werkzeug |  * Restarting with stat
+2026-07-15 09:40:10 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-15 09:40:10 | WARNING | werkzeug |  * Debugger is active!
+2026-07-15 09:40:10 | INFO | werkzeug |  * Debugger PIN: 105-326-465
+2026-07-15 09:43:31 | INFO | werkzeug |  * Detected change in '/root/MyProjects/Dashboard/schedular/dashboard_schedular.py', reloading
+2026-07-15 09:43:31 | INFO | werkzeug |  * Restarting with stat
+2026-07-15 09:43:32 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-15 09:43:32 | WARNING | werkzeug |  * Debugger is active!
+2026-07-15 09:43:32 | INFO | werkzeug |  * Debugger PIN: 105-326-465
+2026-07-15 09:44:51 | INFO | werkzeug |  * Detected change in '/root/MyProjects/Dashboard/app/services/dashboard_sql_client.py', reloading
+2026-07-15 09:44:51 | INFO | werkzeug |  * Restarting with stat
+2026-07-15 09:44:51 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-15 09:44:51 | WARNING | werkzeug |  * Debugger is active!
+2026-07-15 09:44:51 | INFO | werkzeug |  * Debugger PIN: 105-326-465
+2026-07-15 09:45:05 | INFO | werkzeug |  * Detected change in '/root/MyProjects/Dashboard/app/services/data_service.py', reloading
+2026-07-15 09:45:05 | INFO | werkzeug |  * Restarting with stat
+2026-07-15 09:45:05 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-15 09:45:05 | WARNING | werkzeug |  * Debugger is active!
+2026-07-15 09:45:05 | INFO | werkzeug |  * Debugger PIN: 105-326-465
+2026-07-15 09:46:35 | INFO | werkzeug |  * Detected change in '/root/MyProjects/Dashboard/app/services/dashboard_sql_client.py', reloading
+2026-07-15 09:46:35 | INFO | werkzeug |  * Restarting with stat
+2026-07-15 09:46:35 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-15 09:46:35 | WARNING | werkzeug |  * Debugger is active!
+2026-07-15 09:46:35 | INFO | werkzeug |  * Debugger PIN: 105-326-465
+2026-07-15 09:50:02 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-15 09:50:02 | INFO | werkzeug | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2026-07-15 09:50:02 | INFO | werkzeug | [33mPress CTRL+C to quit[0m
+2026-07-15 09:50:02 | INFO | werkzeug |  * Restarting with stat
+2026-07-15 09:50:03 | INFO | app | Dashboard logging configured at /root/MyProjects/Dashboard/logs/dashboard.log
+2026-07-15 09:50:03 | WARNING | werkzeug |  * Debugger is active!
+2026-07-15 09:50:03 | INFO | werkzeug |  * Debugger PIN: 105-326-465
+2026-07-15 09:50:18 | INFO | app | Request started | method=GET path=/ args={'limit': '100', 'segment': 'res', 'customer_page': '1', 'customer_page_size': '15', 'customer_sort': 'desc'}
+2026-07-15 09:50:19 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=100 segment=res
+2026-07-15 09:50:23 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-07-15 09:50:23 | WARNING | app.services.middleware_cache | No account-to-MAC mappings found for 30 requested accounts. Populate service_churn_account_mac_map to enable modem enrichment.
+2026-07-15 09:50:23 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=8
+2026-07-15 09:50:25 | INFO | app | Request completed | method=GET path=/ status=200 duration_ms=6966.70
+2026-07-15 09:50:25 | INFO | werkzeug | 127.0.0.1 - - [15/Jul/2026 09:50:25] "GET /?limit=100&segment=res&customer_page=1&customer_page_size=15&customer_sort=desc HTTP/1.1" 200 -
+2026-07-15 09:50:25 | INFO | app | Request started | method=GET path=/static/css/styles.css args={'v': '20260714s'}
+2026-07-15 09:50:25 | INFO | app | Request completed | method=GET path=/static/css/styles.css status=200 duration_ms=15.51
+2026-07-15 09:50:25 | INFO | werkzeug | 127.0.0.1 - - [15/Jul/2026 09:50:25] "GET /static/css/styles.css?v=20260714s HTTP/1.1" 200 -
+2026-07-15 09:50:25 | INFO | app | Request started | method=GET path=/static/img/sparklight-banner.webp args={}
+2026-07-15 09:50:25 | INFO | app | Request completed | method=GET path=/static/img/sparklight-banner.webp status=304 duration_ms=1.49
+2026-07-15 09:50:25 | INFO | werkzeug | 127.0.0.1 - - [15/Jul/2026 09:50:25] "[36mGET /static/img/sparklight-banner.webp HTTP/1.1[0m" 304 -
+2026-07-15 09:50:25 | INFO | app | Request started | method=GET path=/static/js/export_buttons.js args={'v': '20260714c'}
+2026-07-15 09:50:25 | INFO | app | Request completed | method=GET path=/static/js/export_buttons.js status=304 duration_ms=7.28
+2026-07-15 09:50:25 | INFO | werkzeug | 127.0.0.1 - - [15/Jul/2026 09:50:25] "[36mGET /static/js/export_buttons.js?v=20260714c HTTP/1.1[0m" 304 -
+2026-07-15 09:50:25 | INFO | app | Request started | method=GET path=/static/js/dashboard.js args={'v': '20260714c'}
+2026-07-15 09:50:25 | INFO | app | Request completed | method=GET path=/static/js/dashboard.js status=200 duration_ms=2.88
+2026-07-15 09:50:25 | INFO | werkzeug | 127.0.0.1 - - [15/Jul/2026 09:50:25] "GET /static/js/dashboard.js?v=20260714c HTTP/1.1" 200 -
+2026-07-15 09:51:25 | INFO | app | Request started | method=GET path=/api/dashboard args={'segment': 'res', 'location': '', 'limit': '100', 'customer_page': '1', 'customer_page_size': '15', 'customer_sort': 'desc'}
+2026-07-15 09:51:25 | INFO | app.services.data_service | Building dashboard snapshot. mode=live location=ALL LOCATIONS limit=100 segment=res
+2026-07-15 09:51:29 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-07-15 09:51:29 | WARNING | app.services.middleware_cache | No account-to-MAC mappings found for 30 requested accounts. Populate service_churn_account_mac_map to enable modem enrichment.
+2026-07-15 09:51:30 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-07-15 09:51:30 | INFO | app | Request completed | method=GET path=/api/dashboard status=200 duration_ms=4784.51
+2026-07-15 09:51:30 | INFO | werkzeug | 127.0.0.1 - - [15/Jul/2026 09:51:30] "GET /api/dashboard?segment=res&location=&limit=100&customer_page=1&customer_page_size=15&customer_sort=desc HTTP/1.1" 200 -
+2026-07-15 09:51:30 | INFO | app | Request started | method=GET path=/api/dashboard/customers args={'segment': 'res', 'location': '', 'limit': '100', 'customer_page': '2', 'customer_page_size': '15', 'customer_sort': 'desc'}
+2026-07-15 09:51:33 | INFO | app.services.middleware_cache | Refreshed middleware account-to-modem cache. row_count=0
+2026-07-15 09:51:33 | INFO | app | Request completed | method=GET path=/api/dashboard/customers status=200 duration_ms=2625.62
+2026-07-15 09:51:33 | INFO | werkzeug | 127.0.0.1 - - [15/Jul/2026 09:51:33] "GET /api/dashboard/customers?segment=res&location=&limit=100&customer_page=2&customer_page_size=15&customer_sort=desc HTTP/1.1" 200 -
